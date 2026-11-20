@@ -358,7 +358,7 @@ doSearch();renderCart();
     }
 })();
 </script>
-<!-- === КНОПКА И ОКНО ИИ-ЮРИСТА === -->
+<!-- === КНОПКА И ОКНО ИИ-ЮРИСТА С ГОЛОСОВЫМ ВВОДОМ === -->
 <button onclick="document.getElementById('ai-modal').style.display='flex'" style="position:fixed; bottom:20px; right:20px; background:#2563eb; color:#fff; border:none; border-radius:50px; padding:12px 18px; font-weight:bold; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4); cursor:pointer; z-index:9999;">
     🤖 ИИ-Юрист
 </button>
@@ -369,13 +369,85 @@ doSearch();renderCart();
             <h3 style="margin:0; font-size:18px;">🤖 Разбор ситуации (ИИ)</h3>
             <button onclick="document.getElementById('ai-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:22px; cursor:pointer; padding:0 4px;">✕</button>
         </div>
-        <textarea id="ai-input" rows="3" placeholder="Опишите ситуацию..." style="width:100%; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:8px; padding:10px; font-size:14px; box-sizing:border-box; resize:none; margin-bottom:10px;"></textarea>
-        <button onclick="askAiLawyer()" id="ai-btn" style="width:100%; background:#2563eb; color:#fff; border:none; border-radius:8px; padding:12px; font-weight:bold; font-size:15px; cursor:pointer;">Разобрать ситуацию</button>
-        <div id="ai-result" style="margin-top:12px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px; font-size:13px; line-height:1.5; color:#e2e8f0; overflow-y:auto; white-space:pre-wrap; display:none;"></div>
+        <textarea id="ai-input" rows="3" placeholder="Опишите ситуацию или нажмите 🎙️..." style="width:100%; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:8px; padding:10px; font-size:14px; box-sizing:border-box; resize:none; margin-bottom:10px;"></textarea>
+        
+        <div style="display:flex; gap:8px;">
+            <button onclick="toggleAiVoice()" id="ai-mic-btn" style="background:#334155; color:#fff; border:1px solid #475569; border-radius:8px; padding:12px 14px; font-size:16px; cursor:pointer;" title="Записать голосом">🎙️</button>
+            <button onclick="askAiLawyer()" id="ai-btn" style="flex:1; background:#2563eb; color:#fff; border:none; border-radius:8px; padding:12px; font-weight:bold; font-size:15px; cursor:pointer;">Разобрать ситуацию</button>
+        </div>
+
+        <div id="ai-result" style="margin-top:12px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px; font-size:13px; line-height:1.5; color:#e2e8f0; overflow-y:auto; max-height:45vh; white-space:pre-wrap; display:none;"></div>
     </div>
 </div>
 
 <script>
+// Скрываем старую нерабочую кнопку микрофона из поиска
+document.querySelectorAll('button').forEach(b => {
+    if (b.innerText.includes('🎤')) b.style.display = 'none';
+});
+
+let aiRecorder = null;
+let aiChunks = [];
+let aiIsRec = false;
+
+window.toggleAiVoice = async function() {
+    const micBtn = document.getElementById("ai-mic-btn");
+    const input = document.getElementById("ai-input");
+
+    if (aiIsRec && aiRecorder) {
+        aiRecorder.stop();
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        aiChunks = [];
+        aiRecorder = new MediaRecorder(stream);
+        aiRecorder.ondataavailable = e => { if (e.data.size > 0) aiChunks.push(e.data); };
+
+        aiRecorder.onstop = async () => {
+            aiIsRec = false;
+            micBtn.style.background = "#334155";
+            micBtn.innerText = "⏳";
+            stream.getTracks().forEach(t => t.stop());
+
+            const blob = new Blob(aiChunks, { type: "audio/webm" });
+            const form = new FormData();
+            form.append("file", blob, "voice.webm");
+
+            try {
+                const voiceUrl = new URL("/functions/v1/voice-to-text", "https://" + "unejwdoylcvtwyhjnltp.supabase.co").toString();
+                const res = await fetch(voiceUrl, {
+                    method: "POST",
+                    headers: {
+                        "apikey": "sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO",
+                        "Authorization": "Bearer sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO"
+                    },
+                    body: form
+                });
+                const data = await res.json();
+                if (data.text) {
+                    input.value = data.text;
+                    // Автоматически запускаем разбор ситуации сразу после распознавания голоса
+                    window.askAiLawyer();
+                } else {
+                    alert("Не удалось распознать голос: " + (data.error || "попробуйте еще раз"));
+                }
+            } catch (e) {
+                alert("Ошибка соединения при отправке голоса.");
+            }
+            micBtn.innerText = "🎙️";
+        };
+
+        aiRecorder.start();
+        aiIsRec = true;
+        micBtn.style.background = "#dc2626";
+        micBtn.innerText = "⏹️";
+    } catch (err) {
+        alert("Нет доступа к микрофону! Проверьте разрешения приложения.");
+    }
+};
+
 window.askAiLawyer = async function() {
     const text = document.getElementById("ai-input").value.trim();
     if (!text) return;
@@ -385,19 +457,18 @@ window.askAiLawyer = async function() {
     btn.disabled = true;
     btn.innerText = "Анализирую законы...";
     resBox.style.display = "block";
-    resBox.innerText = "Читаю статьи и считаю срок...";
-
-    const allLaws = document.body.innerText.slice(0, 50000);
+    resBox.innerText = "Читаю статьи RMRP...";
 
     try {
-        const res = await fetch("https://unejwdoylcvtwyhjnltp.supabase.co/functions/v1/ai-lawyer", {
+        const aiUrl = new URL("/functions/v1/ai-lawyer", "https://" + "unejwdoylcvtwyhjnltp.supabase.co").toString();
+        const res = await fetch(aiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "apikey": "sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO",
                 "Authorization": "Bearer sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO"
             },
-            body: JSON.stringify({ situation: text, lawsText: allLaws })
+            body: JSON.stringify({ situation: text, lawsText: document.body.innerText.slice(0, 40000) })
         });
         const data = await res.json();
         resBox.innerText = data.reply || "Не удалось получить ответ.";
@@ -408,66 +479,6 @@ window.askAiLawyer = async function() {
     btn.disabled = false;
     btn.innerText = "Разобрать ситуацию";
 };
-</script>
-<script>
-(function() {
-    class OpenRouterSpeechRecognition {
-        constructor() {
-            this.lang = 'ru-RU';
-            this.mediaRecorder = null;
-            this.chunks = [];
-        }
-        async start() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                this.chunks = [];
-                this.mediaRecorder = new MediaRecorder(stream);
-                this.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) this.chunks.push(e.data); };
-                this.mediaRecorder.onstop = async () => {
-                    stream.getTracks().forEach(t => t.stop());
-                    const blob = new Blob(this.chunks, { type: 'audio/webm' });
-                    const reader = new FileReader();
-                    reader.readAsDataURL(blob);
-                    reader.onloadend = async () => {
-                        const base64Audio = reader.result.split(',').at(1);
-                        try {
-                            const apiUrl = "https://supabase.co" + "/functions/v1/voice-to-text";
-                            const res = await fetch(apiUrl, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "apikey": "sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO",
-                                    "Authorization": "Bearer sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO"
-                                },
-                                body: JSON.stringify({ audioBase64: base64Audio })
-                            });
-                            const data = await res.json();
-                            if (data.text && this.onresult) {
-                                this.onresult({ results: [[{ transcript: data.text }]] });
-                            }
-                        } catch (err) {
-                            if (this.onerror) this.onerror({ error: 'api_error' });
-                        }
-                        if (this.onend) this.onend();
-                    };
-                };
-                this.mediaRecorder.start();
-                if (this.onstart) this.onstart();
-                setTimeout(() => { if (this.mediaRecorder && this.mediaRecorder.state === 'recording') this.stop(); }, 5000);
-            } catch (e) {
-                if (this.onerror) this.onerror({ error: 'not-allowed' });
-                if (this.onend) this.onend();
-            }
-        }
-        stop() {
-            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-                this.mediaRecorder.stop();
-            }
-        }
-    }
-    window.SpeechRecognition = OpenRouterSpeechRecognition;
-    window.webkitSpeechRecognition = OpenRouterSpeechRecognition;
-})();
 </script>
 </body>
 </html>
