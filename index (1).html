@@ -375,7 +375,7 @@ doSearch();renderCart();
     </div>
 </div>
 
-<script>
+ <script>
 window.askAiLawyer = async function() {
     const text = document.getElementById("ai-input").value.trim();
     if (!text) return;
@@ -390,8 +390,7 @@ window.askAiLawyer = async function() {
     const allLaws = document.body.innerText.slice(0, 50000);
 
     try {
-        const res = await fetch("https://supabase.co", {
-
+        const res = await fetch("https://unejwdoylcvtwyhjnltp.supabase.co/functions/v1/ai-lawyer", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
