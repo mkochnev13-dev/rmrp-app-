@@ -42,7 +42,6 @@ button:active { transform: scale(0.94); }
 </style>
 </head>
 <body>
-
 <div id="rmrp-lock-screen">
     <div class="card" style="text-align:center;">
         <h2>RMRPЮрист</h2>
@@ -112,6 +111,7 @@ button:active { transform: scale(0.94); }
         <button class="primary-btn" onclick="document.getElementById('settings-modal').style.display='none'" style="background:#1e293b; margin-top:2px;">Закрыть</button>
     </div>
 </div>
+
 <div id="laws-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="font-size:18px;">Законодательство RMRP</h2>
@@ -130,17 +130,6 @@ button:active { transform: scale(0.94); }
     <input type="text" id="nrp-search-input" oninput="filterNrpView()" placeholder="Поиск по правилам (например: MG, PG, обыск, ЗЗ, откат)..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#11161d; color:#fff; margin-bottom:8px; outline:none;">
     <div id="nrp-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;"></div>
     <div id="nrp-content-box" style="flex:1; overflow-y:auto; background:#11161d; border:1px solid #1e293b; border-radius:10px; padding:12px; font-size:13px; line-height:1.55; white-space:pre-wrap; color:#cbd5e1;">Загрузка правил...</div>
-</div>
-
-    <div style="flex:1; overflow-y:auto; background:#11161d; border:1px solid #1e293b; border-radius:10px; padding:14px; font-size:13px; line-height:1.6; color:#cbd5e1;">
-        <p style="margin-bottom:10px;"><b>• NonRP поведение (НРП):</b> Действия, невозможные в реальной жизни или нарушающие логику роли (стрельба в ЗЗ, таран без причины, разговор в ноке, лут в бою).</p>
-        <p style="margin-bottom:10px;"><b>• NonRP Cop (НРП Гос):</b> Задержание без причины и отыгровок, изъятие нелегала без первичного обыска, неверная выдача розыска/штрафа, игнорирование запроса адвоката.</p>
-        <p style="margin-bottom:10px;"><b>• MG (MetaGaming):</b> Использование ООС-информации (из Discord, чата, стрима или по нику над головой) в IC-процессе.</p>
-        <p style="margin-bottom:10px;"><b>• PG (PowerGaming):</b> Воображение из себя супергероя (выход 1 в 3 с оружием, игнорирование угроз при наставленном стволе).</p>
-        <p style="margin-bottom:10px;"><b>• DM (DeathMatch) / DB (DriveBy):</b> Убийство или нанесение урона без веской IC-причины / наезд транспортом.</p>
-        <p style="margin-bottom:10px;"><b>• RK (RevengeKill):</b> Возвращение на место смерти в течение 15 минут или месть игроку за убийство.</p>
-        <p style="margin-bottom:0;"><b>• Уход от РП (ОРП):</b> Выход из игры (/q), уход в АФК или в воду/интерьер во время погони или задержания.</p>
-    </div>
 </div>
 
 <div class="header">
