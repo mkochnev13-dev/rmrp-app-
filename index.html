@@ -455,7 +455,7 @@ window.sendLexMessage = async function() {
         const res = await fetch(SB_BASE + "/functions/v1/ai-lawyer", {
             method: "POST",
             headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
-            body: JSON.stringify({ situation: text, role: currentRole })
+            body: JSON.stringify({ situation: text, role: currentRole, deviceId: currentDevId })
         });
         const data = await res.json();
         loading.remove();
