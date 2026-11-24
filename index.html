@@ -331,22 +331,59 @@ window.activateKey = async function() {
     if (!currentDevId) currentDevId = await getDeviceId();
     const lockMsg = document.getElementById("lock-msg");
     lockMsg.innerText = "Проверка ключа...";
+
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5000);
+
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + code + "&select=*", { headers: sbHeaders });
+        const res = await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(code) + "&select=*", {
+            headers: sbHeaders,
+            signal: ctrl.signal
+        });
+        clearTimeout(t);
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { lockMsg.innerText = "Неверный ключ!"; return; }
+
+        if (!Array.isArray(data) || data.length === 0) {
+            lockMsg.innerText = "Неверный ключ!";
+            return;
+        }
         const key = data.at(0);
         if (key.is_banned) { lockMsg.innerText = "Ключ заблокирован."; return; }
-        if (key.device_id && key.device_id !== currentDevId) { lockMsg.innerText = "Ключ привязан к другому устройству!"; return; }
+        if (key.device_id && key.device_id !== currentDevId) {
+            lockMsg.innerText = "Ключ привязан к другому устройству!";
+            return;
+        }
+
         let expDate = key.expires_at;
-        if (!expDate) { const d = new Date(); d.setDate(d.getDate() + key.days); expDate = d.toISOString(); }
-        else if (new Date(expDate) < new Date()) { lockMsg.innerText = "Срок ключа истек."; return; }
-        await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + code, { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ device_id: currentDevId, expires_at: expDate }) });
+        if (!expDate) {
+            const d = new Date();
+            d.setDate(d.getDate() + (key.days || 30));
+            expDate = d.toISOString();
+        } else if (new Date(expDate) < new Date()) {
+            lockMsg.innerText = "Срок ключа истек.";
+            return;
+        }
+
+        const patchRes = await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(code), {
+            method: "PATCH",
+            headers: sbHeaders,
+            body: JSON.stringify({ device_id: currentDevId, expires_at: expDate })
+        });
+
+        if (!patchRes.ok) {
+            lockMsg.innerText = "Ошибка записи в базу (" + patchRes.status + "). Проверьте права таблицы.";
+            return;
+        }
+
         updateSubDisplay(expDate, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
         document.getElementById("rmrp-lock-screen").style.display = "none";
         applySavedSettings();
-    } catch (e) { lockMsg.innerText = "Ошибка сети."; }
+    } catch (e) {
+        clearTimeout(t);
+        lockMsg.innerText = "Тайм-аут или ошибка сети. Попробуйте ещё раз.";
+    }
 };
+
 
 window.setAppColor = function(mainHex, lightHex) {
     localStorage.setItem("rmrp_color_main", mainHex);
