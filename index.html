@@ -136,7 +136,7 @@ button:active { transform: scale(0.94); }
     <div class="logo"><span style="color:#38bdf8;">RMRPЮрист</span></div>
     <div style="display:flex; gap:5px;">
         <button class="role-btn" onclick="openLawsModal()" style="background:#0f2942; border-color:#0284c7;">Законка</button>
-        <button class="role-btn" onclick="document.getElementById('nrp-modal').style.display='flex'" style="background:#2d1518; color:#fca5a5; border-color:#7f1d1d;">НРП</button>
+        <button class="role-btn" onclick="openNrpModal()" style="background:#2d1518; color:#fca5a5; border-color:#7f1d1d;">НРП</button>
     </div>
     <div style="display:flex; gap:5px; align-items:center;">
         <button id="lex-role-btn" class="role-btn" onclick="cycleLexRole()">ОФИЦЕР</button>
@@ -496,6 +496,56 @@ window.toggleLexVoice = async function() {
     } catch (err) { alert("Нет доступа к микрофону."); }
 };
 
+let loadedNrpList = [];
+let activeNrpIdx = 0;
+
+window.openNrpModal = async function() {
+    document.getElementById("nrp-modal").style.display = "flex";
+    if (loadedNrpList.length > 0) return;
+    const box = document.getElementById("nrp-content-box");
+    const tabs = document.getElementById("nrp-tabs");
+    try {
+        const res = await fetch(SB_BASE + "/rest/v1/rmrp_nrp?select=id,title,content", { headers: sbHeaders });
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) { box.innerText = "База правил НРП пуста."; return; }
+        const allText = data.map(item => "=== " + (item.title || item.id) + " ===\n" + (item.content || "")).join("\n\n");
+        loadedNrpList = [{ id: "all", title: "Все", content: allText }].concat(data);
+        tabs.innerHTML = loadedNrpList.map((item, idx) => '<button onclick="selectNrpTab(' + idx + ')" id="nrp-tab-' + idx + '" style="background:' + (idx===0?'#dc2626':'#1e293b') + '; color:#fff; border:none; border-radius:14px; padding:5px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
+        selectNrpTab(0);
+    } catch (e) { box.innerText = "Ошибка загрузки правил: " + e; }
+};
+
+window.selectNrpTab = function(idx) {
+    activeNrpIdx = idx;
+    loadedNrpList.forEach((_, i) => {
+        const b = document.getElementById("nrp-tab-" + i);
+        if (b) b.style.background = (i === idx) ? "#dc2626" : "#1e293b";
+    });
+    filterNrpView();
+};
+
+window.filterNrpView = function() {
+    const box = document.getElementById("nrp-content-box");
+    const item = loadedNrpList[activeNrpIdx];
+    if (!item) return;
+    const q = document.getElementById("nrp-search-input").value.trim().toLowerCase();
+    const text = item.content || "";
+    if (!q) {
+        box.innerText = activeNrpIdx === 0 ? "Введите слово в поиск выше, чтобы найти по всем правилам проекта сразу, или выберите нужный раздел сверху." : text;
+        return;
+    }
+    const lines = text.split("\n");
+    const found = [];
+    let currentTitle = item.title;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith("===") && lines[i].endsWith("===")) currentTitle = lines[i].replace(/=/g, "").trim();
+        if (lines[i].toLowerCase().includes(q)) {
+            const prefix = activeNrpIdx === 0 ? "[" + currentTitle + "]\n" : "";
+            found.push(prefix + lines.slice(Math.max(0, i - 1), i + 6).join("\n"));
+        }
+    }
+    box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
+};
 checkAccess();
 </script>
 </body>
