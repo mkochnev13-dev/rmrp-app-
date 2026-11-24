@@ -65,8 +65,9 @@ button:active { transform: scale(0.94); }
             <div id="sub-time-left" style="color:#38bdf8; font-weight:bold; font-size:13.5px;">Загрузка...</div>
         </div>
         <div class="setting-row">
-            <span class="setting-label">Лимит ИИ-запросов</span>
+            <span class="setting-label">Дневной лимит ИИ-запросов</span>
             <div id="requests-left-display" style="color:#38bdf8; font-weight:bold; font-size:13.5px;">Загрузка...</div>
+            <div id="reset-timer-display" style="color:#64748b; font-size:11.5px; margin-top:4px;">Обновляется каждые 24 часа</div>
         </div>
         <div class="setting-row">
             <span class="setting-label">Фоновая тема</span>
@@ -190,6 +191,8 @@ let timerInterval = null;
 let timerSecondsLeft = 0;
 let currentUsedReq = 0;
 let currentLimitReq = 50;
+let currentLastReset = null;
+let resetCountdownInterval = null;
 
 function playBeep() {
     try {
@@ -232,7 +235,29 @@ window.stopLawyerTimer = function() {
     disp.innerText = "Адвокат: не запущен";
 };
 
-function updateSubDisplay(expiresAtStr, used, limit) {
+function startResetCountdown() {
+    clearInterval(resetCountdownInterval);
+    const timerEl = document.getElementById("reset-timer-display");
+    if (!timerEl) return;
+    const tickReset = () => {
+        if (!currentLastReset) { timerEl.innerText = "Обновляется каждые 24 часа"; return; }
+        const diff = new Date(currentLastReset).getTime() + 86400000 - Date.now();
+        if (diff <= 0) {
+            timerEl.innerText = "Доступно обновление (сделайте любой запрос)";
+            timerEl.style.color = "#34d399";
+            return;
+        }
+        const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
+        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
+        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
+        timerEl.style.color = "#64748b";
+        timerEl.innerText = "Обновление через: " + h + "ч " + m + "м " + s + "с";
+    };
+    tickReset();
+    resetCountdownInterval = setInterval(tickReset, 1000);
+}
+
+function updateSubDisplay(expiresAtStr, used, limit, lastResetStr) {
     const el = document.getElementById("sub-time-left");
     if (expiresAtStr) {
         const exp = new Date(expiresAtStr);
@@ -244,14 +269,19 @@ function updateSubDisplay(expiresAtStr, used, limit) {
             el.innerText = "Осталось: " + days + " дн. " + hours + " ч. (до " + exp.toLocaleDateString("ru-RU") + ")";
         }
     }
+    if (lastResetStr) {
+        currentLastReset = lastResetStr;
+        if (Date.now() - new Date(lastResetStr).getTime() >= 86400000) used = 0;
+    }
     if (typeof used === "number") currentUsedReq = used;
     if (typeof limit === "number") currentLimitReq = limit;
     const reqEl = document.getElementById("requests-left-display");
     if (reqEl) {
         const left = Math.max(0, currentLimitReq - currentUsedReq);
-        reqEl.innerText = "Осталось: " + left + " из " + currentLimitReq + " запросов";
-        if (left <= 5) reqEl.style.color = "#f87171";
+        reqEl.innerText = "Дневной лимит: " + left + " из " + currentLimitReq + " запросов";
+        reqEl.style.color = left <= 5 ? "#f87171" : "#38bdf8";
     }
+    startResetCountdown();
 }
 
 async function getDeviceId() {
@@ -282,7 +312,7 @@ async function checkAccess() {
         if (Array.isArray(data) && data.length > 0) {
             const key = data.at(0);
             if (!key.is_banned && new Date(key.expires_at) >= new Date()) {
-                updateSubDisplay(key.expires_at, key.requests_used || 0, key.requests_limit || 50);
+                updateSubDisplay(key.expires_at, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
                 lockScreen.style.display = "none";
                 applySavedSettings();
                 return;
@@ -312,7 +342,7 @@ window.activateKey = async function() {
         if (!expDate) { const d = new Date(); d.setDate(d.getDate() + key.days); expDate = d.toISOString(); }
         else if (new Date(expDate) < new Date()) { lockMsg.innerText = "Срок ключа истек."; return; }
         await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + code, { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ device_id: currentDevId, expires_at: expDate }) });
-        updateSubDisplay(expDate, key.requests_used || 0, key.requests_limit || 50);
+        updateSubDisplay(expDate, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
         document.getElementById("rmrp-lock-screen").style.display = "none";
         applySavedSettings();
     } catch (e) { lockMsg.innerText = "Ошибка сети."; }
@@ -372,6 +402,7 @@ window.toggleStealthMode = async function() {
         btn.style.background = isStealth ? "#0ea5e9" : "#475569";
     } else { alert("Доступно только в ПК-версии (.exe)."); }
 };
+
 let loadedLawsList = [], activeLawIdx = 0;
 
 window.openLawsModal = async function() {
@@ -421,7 +452,6 @@ window.filterLawsView = function() {
     }
     box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
 };
-
 let loadedNrpList = [], activeNrpIdx = 0;
 
 window.openNrpModal = async function() {
@@ -525,8 +555,8 @@ window.sendLexMessage = async function() {
         const data = await res.json();
         loading.remove();
         appendLexBubble(false, data.reply || "Нет ответа.", currentRole);
-        if (data.reply && !data.reply.includes("Лимит ИИ-запросов исчерпан")) {
-            updateSubDisplay(null, currentUsedReq + 1, currentLimitReq);
+        if (data.reply && !data.reply.includes("лимит ИИ-запросов исчерпан")) {
+            updateSubDisplay(null, currentUsedReq + 1, currentLimitReq, null);
         }
     } catch (e) {
         loading.remove();
@@ -564,7 +594,12 @@ window.toggleLexVoice = async function() {
     } catch (err) { alert("Нет доступа к микрофону."); }
 };
 
-checkAccess();
+if (window.pywebview) {
+    checkAccess();
+} else {
+    window.addEventListener("pywebviewready", checkAccess);
+    setTimeout(() => { if (!currentDevId) checkAccess(); }, 1200);
+}
 </script>
 </body>
 </html>
