@@ -45,6 +45,16 @@ body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; height: 100
         </div>
     </div>
 </div>
+        <div class="setting-row">
+            <span class="setting-label">Цвет интерфейса (акцент)</span>
+            <div style="display:flex; gap:10px; justify-content:space-between; padding-top:4px;">
+                <button onclick="setAppColor('#0ea5e9', '#38bdf8')" style="width:32px; height:32px; border-radius:50%; background:#0ea5e9; border:2px solid #fff; cursor:pointer;" title="Голубой (Полиция)"></button>
+                <button onclick="setAppColor('#ef4444', '#f87171')" style="width:32px; height:32px; border-radius:50%; background:#ef4444; border:2px solid #1e293b; cursor:pointer;" title="Красный (Крайм / Админ)"></button>
+                <button onclick="setAppColor('#10b981', '#34d399')" style="width:32px; height:32px; border-radius:50%; background:#10b981; border:2px solid #1e293b; cursor:pointer;" title="Зеленый (Армия / Медики)"></button>
+                <button onclick="setAppColor('#8b5cf6', '#a78bfa')" style="width:32px; height:32px; border-radius:50%; background:#8b5cf6; border:2px solid #1e293b; cursor:pointer;" title="Фиолетовый"></button>
+                <button onclick="setAppColor('#f59e0b', '#fbbf24')" style="width:32px; height:32px; border-radius:50%; background:#f59e0b; border:2px solid #1e293b; cursor:pointer;" title="Золотой"></button>
+            </div>
+        </div>
 
 <div id="settings-modal" style="display:none;">
     <div class="card">
@@ -443,6 +453,28 @@ window.toggleLexVoice = async function() {
         btn.innerText = "STOP";
     } catch (err) { alert("Нет доступа к микрофону."); }
 };
+window.setAppColor = function(mainHex, lightHex) {
+    localStorage.setItem("rmrp_color_main", mainHex);
+    localStorage.setItem("rmrp_color_light", lightHex);
+
+    let styleTag = document.getElementById("dynamic-theme-style");
+    if (!styleTag) {
+        styleTag = document.createElement("style");
+        styleTag.id = "dynamic-theme-style";
+        document.head.appendChild(styleTag);
+    }
+    styleTag.innerHTML = `
+        .send-btn, .primary-btn { background: ${mainHex} !important; }
+        .logo span, #sub-time-left, #opacity-val, #lex-role-btn { color: ${lightHex} !important; }
+        #lex-role-btn { border-color: ${mainHex} !important; }
+        #opacity-slider { accent-color: ${mainHex} !important; }
+        .preset-chip:hover { border-color: ${lightHex} !important; color: #fff !important; }
+    `;
+};
+
+const savedMain = localStorage.getItem("rmrp_color_main");
+const savedLight = localStorage.getItem("rmrp_color_light");
+if (savedMain && savedLight) setAppColor(savedMain, savedLight);
 </script>
 </body>
 </html>
