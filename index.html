@@ -30,6 +30,18 @@ body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; height: 100
 .send-btn { background: #0ea5e9; color: #fff; font-weight: bold; font-size: 15px; }
 .setting-row { background: #0b0f14; border: 1px solid #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
 .setting-label { font-size: 12px; color: #64748b; margin-bottom: 6px; display: block; }
+/* Плавные анимации */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes msgSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+#settings-modal[style*="flex"], #laws-modal[style*="flex"], #nrp-modal[style*="flex"] { animation: fadeIn 0.2s ease-out; }
+#settings-modal .card { animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+#lex-chat > div { animation: msgSlide 0.25s ease-out; }
+
+body, .header, .timer-bar, .presets-bar, .input-area, .card, .setting-row { transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+button { transition: transform 0.12s ease, background 0.2s ease, opacity 0.2s ease; }
+button:active { transform: scale(0.94); }
 </style>
 </head>
 <body>
@@ -45,16 +57,26 @@ body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; height: 100
         </div>
     </div>
 </div>
-        <div class="setting-row">
-            <span class="setting-label">Цвет интерфейса (акцент)</span>
-            <div style="display:flex; gap:10px; justify-content:space-between; padding-top:4px;">
-                <button onclick="setAppColor('#0ea5e9', '#38bdf8')" style="width:32px; height:32px; border-radius:50%; background:#0ea5e9; border:2px solid #fff; cursor:pointer;" title="Голубой (Полиция)"></button>
-                <button onclick="setAppColor('#ef4444', '#f87171')" style="width:32px; height:32px; border-radius:50%; background:#ef4444; border:2px solid #1e293b; cursor:pointer;" title="Красный (Крайм / Админ)"></button>
-                <button onclick="setAppColor('#10b981', '#34d399')" style="width:32px; height:32px; border-radius:50%; background:#10b981; border:2px solid #1e293b; cursor:pointer;" title="Зеленый (Армия / Медики)"></button>
-                <button onclick="setAppColor('#8b5cf6', '#a78bfa')" style="width:32px; height:32px; border-radius:50%; background:#8b5cf6; border:2px solid #1e293b; cursor:pointer;" title="Фиолетовый"></button>
-                <button onclick="setAppColor('#f59e0b', '#fbbf24')" style="width:32px; height:32px; border-radius:50%; background:#f59e0b; border:2px solid #1e293b; cursor:pointer;" title="Золотой"></button>
+                <div class="setting-row">
+            <span class="setting-label">Фоновая тема</span>
+            <div style="display:flex; gap:6px;">
+                <button onclick="setBgTheme('dark')" style="flex:1; padding:8px; border-radius:8px; border:1px solid #334155; background:#0b0f14; color:#e2e8f0; font-size:12px; font-weight:bold; cursor:pointer;">Ночь</button>
+                <button onclick="setBgTheme('oled')" style="flex:1; padding:8px; border-radius:8px; border:1px solid #27272a; background:#000000; color:#e4e4e7; font-size:12px; font-weight:bold; cursor:pointer;">OLED</button>
+                <button onclick="setBgTheme('light')" style="flex:1; padding:8px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; font-size:12px; font-weight:bold; cursor:pointer;">День</button>
             </div>
         </div>
+
+        <div class="setting-row">
+            <span class="setting-label">Цвет акцентов</span>
+            <div style="display:flex; gap:10px; justify-content:space-between; padding-top:2px;">
+                <button onclick="setAppColor('#0ea5e9', '#38bdf8')" style="width:30px; height:30px; border-radius:50%; background:#0ea5e9; border:2px solid #fff; cursor:pointer;" title="Голубой"></button>
+                <button onclick="setAppColor('#ef4444', '#f87171')" style="width:30px; height:30px; border-radius:50%; background:#ef4444; border:2px solid #1e293b; cursor:pointer;" title="Красный"></button>
+                <button onclick="setAppColor('#10b981', '#34d399')" style="width:30px; height:30px; border-radius:50%; background:#10b981; border:2px solid #1e293b; cursor:pointer;" title="Зеленый"></button>
+                <button onclick="setAppColor('#8b5cf6', '#a78bfa')" style="width:30px; height:30px; border-radius:50%; background:#8b5cf6; border:2px solid #1e293b; cursor:pointer;" title="Фиолетовый"></button>
+                <button onclick="setAppColor('#f59e0b', '#fbbf24')" style="width:30px; height:30px; border-radius:50%; background:#f59e0b; border:2px solid #1e293b; cursor:pointer;" title="Золотой"></button>
+            </div>
+        </div>
+
 
 <div id="settings-modal" style="display:none;">
     <div class="card">
@@ -475,6 +497,47 @@ window.setAppColor = function(mainHex, lightHex) {
 const savedMain = localStorage.getItem("rmrp_color_main");
 const savedLight = localStorage.getItem("rmrp_color_light");
 if (savedMain && savedLight) setAppColor(savedMain, savedLight);
+window.setAppColor = function(mainHex, lightHex) {
+    localStorage.setItem("rmrp_color_main", mainHex);
+    localStorage.setItem("rmrp_color_light", lightHex);
+    let tag = document.getElementById("dyn-accent");
+    if (!tag) { tag = document.createElement("style"); tag.id = "dyn-accent"; document.head.appendChild(tag); }
+    tag.innerHTML = `
+        .send-btn, .primary-btn { background: ${mainHex} !important; }
+        .logo span, #sub-time-left, #opacity-val, #lex-role-btn { color: ${lightHex} !important; }
+        #lex-role-btn { border-color: ${mainHex} !important; }
+        #opacity-slider { accent-color: ${mainHex} !important; }
+    `;
+};
+
+window.setBgTheme = function(mode) {
+    localStorage.setItem("rmrp_bg_theme", mode);
+    let tag = document.getElementById("dyn-bg");
+    if (!tag) { tag = document.createElement("style"); tag.id = "dyn-bg"; document.head.appendChild(tag); }
+
+    if (mode === "oled") {
+        tag.innerHTML = `
+            body, .setting-row, #laws-modal, #nrp-modal { background: #000000 !important; color: #f4f4f5 !important; }
+            .header, .timer-bar, .presets-bar, .input-area, .card, #law-content-box, #nrp-modal > div:last-child { background: #09090b !important; border-color: #27272a !important; }
+        `;
+    } else if (mode === "light") {
+        tag.innerHTML = `
+            body, #laws-modal, #nrp-modal { background: #f1f5f9 !important; color: #0f172a !important; }
+            .header, .presets-bar, .input-area, .card, #law-content-box, #nrp-modal > div:last-child { background: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+            .timer-bar, .setting-row { background: #e2e8f0 !important; border-color: #cbd5e1 !important; }
+            #lex-input, .card h2, .setting-row div { color: #0f172a !important; }
+            .preset-chip, .circle-btn, .timer-btn { background: #e2e8f0 !important; color: #334155 !important; border-color: #cbd5e1 !important; }
+        `;
+    } else {
+        tag.innerHTML = "";
+    }
+};
+
+const sMain = localStorage.getItem("rmrp_color_main");
+const sLight = localStorage.getItem("rmrp_color_light");
+if (sMain && sLight) setAppColor(sMain, sLight);
+const sBg = localStorage.getItem("rmrp_bg_theme");
+if (sBg) setBgTheme(sBg);
 </script>
 </body>
 </html>
