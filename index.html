@@ -490,47 +490,62 @@ window.toggleLexVoice = async function() {
         btn.innerText = "STOP";
     } catch (err) { alert("Нет доступа к микрофону."); }
 };
-let loadedNrpList = [];
-let activeNrpIdx = 0;
 
-window.openNrpModal = async function() {
-    document.getElementById("nrp-modal").style.display = "flex";
-    if (loadedNrpList.length > 0) return;
-    const box = document.getElementById("nrp-content-box");
-    const tabs = document.getElementById("nrp-tabs");
+let loadedLawsList = [];
+let activeLawIdx = 0;
+
+window.openLawsModal = async function() {
+    document.getElementById("laws-modal").style.display = "flex";
+    if (loadedLawsList.length > 0) return;
+    const box = document.getElementById("law-content-box");
+    const tabs = document.getElementById("law-tabs");
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/rmrp_nrp?select=id,title,content", { headers: sbHeaders });
+        const res = await fetch(SB_BASE + "/rest/v1/rmrp_laws?select=id,title,content", { headers: sbHeaders });
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { box.innerText = "Таблица правил пуста."; return; }
-        loadedNrpList = data;
-        tabs.innerHTML = data.map((item, idx) => '<button onclick="selectNrpTab(' + idx + ')" id="nrp-tab-' + idx + '" style="background:' + (idx===0?'#dc2626':'#1e293b') + '; color:#fff; border:none; border-radius:14px; padding:5px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
-        selectNrpTab(0);
-    } catch (e) { box.innerText = "Ошибка загрузки правил: " + e; }
+        if (!Array.isArray(data) || data.length === 0) { box.innerText = "База законов пуста."; return; }
+        
+        const allText = data.map(item => "=== " + (item.title || item.id) + " ===\n" + (item.content || "")).join("\n\n");
+        loadedLawsList = [{ id: "all", title: "Все", content: allText }].concat(data);
+
+        tabs.innerHTML = loadedLawsList.map((item, idx) => '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#0ea5e9':'#1e293b') + '; color:#fff; border:none; border-radius:14px; padding:5px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
+        selectLawTab(0);
+    } catch (e) { box.innerText = "Ошибка загрузки законов: " + e; }
 };
 
-window.selectNrpTab = function(idx) {
-    activeNrpIdx = idx;
-    loadedNrpList.forEach((_, i) => {
-        const b = document.getElementById("nrp-tab-" + i);
-        if (b) b.style.background = (i === idx) ? "#dc2626" : "#1e293b";
+window.selectLawTab = function(idx) {
+    activeLawIdx = idx;
+    loadedLawsList.forEach((_, i) => {
+        const b = document.getElementById("law-tab-" + i);
+        if (b) b.style.background = (i === idx) ? "#0ea5e9" : "#1e293b";
     });
-    filterNrpView();
+    filterLawsView();
 };
 
-window.filterNrpView = function() {
-    const box = document.getElementById("nrp-content-box");
-    const item = loadedNrpList[activeNrpIdx];
+window.filterLawsView = function() {
+    const box = document.getElementById("law-content-box");
+    const item = loadedLawsList[activeLawIdx];
     if (!item) return;
-    const q = document.getElementById("nrp-search-input").value.trim().toLowerCase();
+    const q = document.getElementById("law-search-input").value.trim().toLowerCase();
     const text = item.content || "";
-    if (!q) { box.innerText = text; return; }
+    if (!q) {
+        box.innerText = activeLawIdx === 0 ? "Введите номер статьи или слово в поиск выше, чтобы найти по всем кодексам сразу, или выберите нужный закон сверху." : text;
+        return;
+    }
     const lines = text.split("\n");
     const found = [];
+    let currentLawTitle = item.title;
     for (let i = 0; i < lines.length; i++) {
-        if (lines[i].toLowerCase().includes(q)) found.push(lines.slice(Math.max(0, i - 1), i + 6).join("\n"));
+        if (lines[i].startsWith("===") && lines[i].endsWith("===")) {
+            currentLawTitle = lines[i].replace(/=/g, "").trim();
+        }
+        if (lines[i].toLowerCase().includes(q)) {
+            const prefix = activeLawIdx === 0 ? "[" + currentLawTitle + "]\n" : "";
+            found.push(prefix + lines.slice(Math.max(0, i - 1), i + 6).join("\n"));
+        }
     }
     box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
 };
+
 </script>
 </body>
 </html>
