@@ -124,9 +124,14 @@ button:active { transform: scale(0.94); }
 
 <div id="nrp-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h2 style="font-size:18px; color:#fca5a5;">Памятка НРП и термины RMRP</h2>
+        <h2 style="font-size:18px; color:#fca5a5;">Правила проекта и НРП</h2>
         <button onclick="document.getElementById('nrp-modal').style.display='none'" style="background:#1e293b; border:none; color:#fff; border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">✕ Закрыть</button>
     </div>
+    <input type="text" id="nrp-search-input" oninput="filterNrpView()" placeholder="Поиск по правилам (например: MG, PG, обыск, ЗЗ, откат)..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#11161d; color:#fff; margin-bottom:8px; outline:none;">
+    <div id="nrp-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;"></div>
+    <div id="nrp-content-box" style="flex:1; overflow-y:auto; background:#11161d; border:1px solid #1e293b; border-radius:10px; padding:12px; font-size:13px; line-height:1.55; white-space:pre-wrap; color:#cbd5e1;">Загрузка правил...</div>
+</div>
+
     <div style="flex:1; overflow-y:auto; background:#11161d; border:1px solid #1e293b; border-radius:10px; padding:14px; font-size:13px; line-height:1.6; color:#cbd5e1;">
         <p style="margin-bottom:10px;"><b>• NonRP поведение (НРП):</b> Действия, невозможные в реальной жизни или нарушающие логику роли (стрельба в ЗЗ, таран без причины, разговор в ноке, лут в бою).</p>
         <p style="margin-bottom:10px;"><b>• NonRP Cop (НРП Гос):</b> Задержание без причины и отыгровок, изъятие нелегала без первичного обыска, неверная выдача розыска/штрафа, игнорирование запроса адвоката.</p>
@@ -495,6 +500,47 @@ window.toggleLexVoice = async function() {
         btn.style.background = "#dc2626";
         btn.innerText = "STOP";
     } catch (err) { alert("Нет доступа к микрофону."); }
+};
+let loadedNrpList = [];
+let activeNrpIdx = 0;
+
+window.openNrpModal = async function() {
+    document.getElementById("nrp-modal").style.display = "flex";
+    if (loadedNrpList.length > 0) return;
+    const box = document.getElementById("nrp-content-box");
+    const tabs = document.getElementById("nrp-tabs");
+    try {
+        const res = await fetch(SB_BASE + "/rest/v1/rmrp_nrp?select=id,title,content", { headers: sbHeaders });
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) { box.innerText = "Таблица правил пуста."; return; }
+        loadedNrpList = data;
+        tabs.innerHTML = data.map((item, idx) => '<button onclick="selectNrpTab(' + idx + ')" id="nrp-tab-' + idx + '" style="background:' + (idx===0?'#dc2626':'#1e293b') + '; color:#fff; border:none; border-radius:14px; padding:5px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
+        selectNrpTab(0);
+    } catch (e) { box.innerText = "Ошибка загрузки правил: " + e; }
+};
+
+window.selectNrpTab = function(idx) {
+    activeNrpIdx = idx;
+    loadedNrpList.forEach((_, i) => {
+        const b = document.getElementById("nrp-tab-" + i);
+        if (b) b.style.background = (i === idx) ? "#dc2626" : "#1e293b";
+    });
+    filterNrpView();
+};
+
+window.filterNrpView = function() {
+    const box = document.getElementById("nrp-content-box");
+    const item = loadedNrpList[activeNrpIdx];
+    if (!item) return;
+    const q = document.getElementById("nrp-search-input").value.trim().toLowerCase();
+    const text = item.content || "";
+    if (!q) { box.innerText = text; return; }
+    const lines = text.split("\n");
+    const found = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].toLowerCase().includes(q)) found.push(lines.slice(Math.max(0, i - 1), i + 6).join("\n"));
+    }
+    box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
 };
 </script>
 </body>
