@@ -503,10 +503,8 @@ window.openLawsModal = async function() {
         const res = await fetch(SB_BASE + "/rest/v1/rmrp_laws?select=id,title,content", { headers: sbHeaders });
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) { box.innerText = "База законов пуста."; return; }
-        
         const allText = data.map(item => "=== " + (item.title || item.id) + " ===\n" + (item.content || "")).join("\n\n");
         loadedLawsList = [{ id: "all", title: "Все", content: allText }].concat(data);
-
         tabs.innerHTML = loadedLawsList.map((item, idx) => '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#0ea5e9':'#1e293b') + '; color:#fff; border:none; border-radius:14px; padding:5px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
         selectLawTab(0);
     } catch (e) { box.innerText = "Ошибка загрузки законов: " + e; }
@@ -546,6 +544,97 @@ window.filterLawsView = function() {
     box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
 };
 
+if (window.pywebview) checkAccess();
+else { window.addEventListener('pywebviewready', checkAccess); setTimeout(() => { if (!currentDevId) checkAccess(); }, 500); }
+
+const lexRoles = ["ОФИЦЕР", "АДВОКАТ", "ГРАЖДАНИН"];
+let lexRoleIdx = 0;
+
+window.cycleLexRole = function() {
+    lexRoleIdx = (lexRoleIdx + 1) % lexRoles.length;
+    document.getElementById("lex-role-btn").innerText = lexRoles[lexRoleIdx];
+};
+
+window.clearLexChat = function() {
+    document.getElementById("lex-chat").innerHTML = '<div class="empty-hint">История очищена. Выберите ситуацию снизу или напишите запрос.</div>';
+};
+
+window.sendPreset = function(promptText) {
+    document.getElementById("lex-input").value = promptText;
+    window.sendLexMessage();
+};
+
+function appendLexBubble(isUser, text, roleLabel) {
+    const chat = document.getElementById("lex-chat");
+    const hint = chat.querySelector(".empty-hint");
+    if (hint) hint.remove();
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = isUser ? "flex-end" : "flex-start";
+    if (isUser) {
+        wrap.innerHTML = '<div style="background:#0284c7; color:#fff; padding:10px 14px; border-radius:14px 14px 4px 14px; max-width:85%; font-size:14px; line-height:1.4; white-space:pre-wrap;">' + text + '</div>';
+    } else {
+        const formatted = text.replace(/• Суть:/g, '<b style="color:#fff;">• Суть:</b>').replace(/• Закон:/g, '<b style="color:#fff;">• Закон:</b>').replace(/• Детали:/g, '<b style="color:#fff;">• Детали:</b>');
+        wrap.innerHTML = '<div style="color:#38bdf8; font-size:11px; font-weight:bold; margin-bottom:4px;">' + roleLabel + '</div><div style="color:#cbd5e1; font-size:13.5px; line-height:1.55; white-space:pre-wrap; max-width:96%;">' + formatted + '</div>';
+    }
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+    return wrap;
+}
+
+window.sendLexMessage = async function() {
+    const input = document.getElementById("lex-input");
+    const text = input.value.trim();
+    if (!text) return;
+    const currentRole = lexRoles[lexRoleIdx];
+    input.value = "";
+    appendLexBubble(true, text);
+    const loading = appendLexBubble(false, "Анализирую законы RMRP...", currentRole);
+    try {
+        const res = await fetch(SB_BASE + "/functions/v1/ai-lawyer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY },
+            body: JSON.stringify({ situation: text, role: currentRole })
+        });
+        const data = await res.json();
+        loading.remove();
+        appendLexBubble(false, data.reply || "Нет ответа.", currentRole);
+    } catch (e) {
+        loading.remove();
+        appendLexBubble(false, "Ошибка соединения.", currentRole);
+    }
+};
+
+let lexRec = null, lexChunks = [], lexIsRec = false;
+window.toggleLexVoice = async function() {
+    const btn = document.getElementById("lex-mic-btn");
+    if (lexIsRec && lexRec) { lexRec.stop(); return; }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        lexChunks = [];
+        lexRec = new MediaRecorder(stream);
+        lexRec.ondataavailable = e => { if (e.data.size > 0) lexChunks.push(e.data); };
+        lexRec.onstop = async () => {
+            lexIsRec = false;
+            btn.style.background = "#1e293b";
+            btn.innerText = "...";
+            stream.getTracks().forEach(t => t.stop());
+            const form = new FormData();
+            form.append("file", new Blob(lexChunks, { type: "audio/webm" }), "voice.webm");
+            try {
+                const res = await fetch(SB_BASE + "/functions/v1/voice-to-text", { method: "POST", headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }, body: form });
+                const data = await res.json();
+                if (data.text) { document.getElementById("lex-input").value = data.text; window.sendLexMessage(); }
+            } catch (_) {}
+            btn.innerText = "MIC";
+        };
+        lexRec.start();
+        lexIsRec = true;
+        btn.style.background = "#dc2626";
+        btn.innerText = "STOP";
+    } catch (err) { alert("Нет доступа к микрофону."); }
+};
 </script>
 </body>
 </html>
