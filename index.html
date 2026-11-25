@@ -447,8 +447,9 @@ window.openLawsModal = async function() {
     if (loadedLawsList.length > 0) return;
     const box = document.getElementById("law-content-box");
     const tabs = document.getElementById("law-tabs");
+    box.innerText = "Загрузка базы законов...";
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/rmrp_laws?select=id,title,content", { headers: sbHeaders });
+        const res = await fetch(SB_BASE + "/rest/v1/rmrp_laws?select=id,title,content&order=id.asc", { headers: sbHeaders });
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) { box.innerText = "База законов пуста."; return; }
         const allText = data.map(item => "=== " + (item.title || item.id) + " ===\n" + (item.content || "")).join("\n\n");
@@ -473,10 +474,19 @@ window.filterLawsView = function() {
     if (!item) return;
     const q = document.getElementById("law-search-input").value.trim().toLowerCase();
     const text = item.content || "";
+
     if (!q) {
-        box.innerText = activeLawIdx === 0 ? "Введите номер статьи или слово в поиск выше, чтобы найти по всем кодексам сразу, или выберите нужный закон сверху." : text;
+        if (activeLawIdx === 0) {
+            box.innerHTML = '<div style="color:#94a3b8; margin-bottom:10px;">Выберите кодекс ниже или введите статью/слово в поиск сверху (ИИ не используется):</div>' +
+                loadedLawsList.slice(1).map((law, i) =>
+                    '<div onclick="selectLawTab(' + (i + 1) + ')" style="background:#16202c; border:1px solid #1e3a5f; color:#38bdf8; padding:10px 12px; border-radius:8px; margin-bottom:6px; font-weight:bold; cursor:pointer;">' + (i + 1) + '. ' + (law.title || law.id) + '</div>'
+                ).join("");
+        } else {
+            box.innerText = text;
+        }
         return;
     }
+
     const lines = text.split("\n");
     const found = [];
     let currentTitle = item.title;
@@ -489,6 +499,7 @@ window.filterLawsView = function() {
     }
     box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
 };
+
 let loadedNrpList = [], activeNrpIdx = 0;
 
 window.openNrpModal = async function() {
