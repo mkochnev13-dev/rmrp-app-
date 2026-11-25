@@ -440,7 +440,45 @@ window.toggleStealthMode = async function() {
     } else { alert("Доступно только в ПК-версии (.exe)."); }
 };
 
-let loadedLawsList = [], activeLawIdx = 0;
+let loadedLawsList = [], activeLawIdx = 0, parsedLawCards = [];
+
+function parseLawsToCards(data) {
+    const cards = [];
+    data.forEach((law, lawIdx) => {
+        const rawTitle = law.title || law.id || "Закон";
+        let shortTag = rawTitle.slice(0, 12);
+        if (/уголовн/i.test(rawTitle)) shortTag = "УК";
+        else if (/административ|коап/i.test(rawTitle)) shortTag = "КоАП";
+        else if (/дорожн|пдд/i.test(rawTitle)) shortTag = "ПДД";
+        else if (/процессуал/i.test(rawTitle)) shortTag = "ПК";
+        else if (/полиц/i.test(rawTitle)) shortTag = "ФЗ о Полиции";
+        else if (/оружи/i.test(rawTitle)) shortTag = "ФЗ об Оружии";
+
+        const lines = (law.content || "").split("\n");
+        let cur = null;
+
+        lines.forEach(line => {
+            const t = line.trim();
+            if (!t) return;
+            const artMatch = t.match(/^(?:Статья|Ст\.?)\s*([0-9]+(?:\.[0-9]+)*)[.\s:—-]*(.*)/i);
+            if (artMatch) {
+                if (cur) cards.push(cur);
+                cur = {
+                    lawIdx: lawIdx + 1,
+                    tag: shortTag,
+                    fullLaw: rawTitle,
+                    num: artMatch[1],
+                    title: artMatch[2] || t,
+                    body: []
+                };
+            } else if (cur) {
+                cur.body.push(t);
+            }
+        });
+        if (cur) cards.push(cur);
+    });
+    return cards;
+}
 
 window.openLawsModal = async function() {
     document.getElementById("laws-modal").style.display = "flex";
@@ -452,53 +490,69 @@ window.openLawsModal = async function() {
         const res = await fetch(SB_BASE + "/rest/v1/rmrp_laws?select=id,title,content&order=id.asc", { headers: sbHeaders });
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) { box.innerText = "База законов пуста."; return; }
-        const allText = data.map(item => "=== " + (item.title || item.id) + " ===\n" + (item.content || "")).join("\n\n");
-        loadedLawsList = [{ id: "all", title: "Все", content: allText }].concat(data);
-        tabs.innerHTML = loadedLawsList.map((item, idx) => '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#0ea5e9':'#1e293b') + '; color:#fff; border:none; border-radius:14px; padding:5px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
+        loadedLawsList = [{ id: "all", title: "Все" }].concat(data);
+        parsedLawCards = parseLawsToCards(data);
+
+        tabs.innerHTML = loadedLawsList.map((item, idx) =>
+            '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (idx===0?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>'
+        ).join("");
         selectLawTab(0);
-    } catch (e) { box.innerText = "Ошибка загрузки законов: " + e; }
+    } catch (e) { box.innerText = "Ошибка загрузки: " + e; }
 };
 
 window.selectLawTab = function(idx) {
     activeLawIdx = idx;
     loadedLawsList.forEach((_, i) => {
         const b = document.getElementById("law-tab-" + i);
-        if (b) b.style.background = (i === idx) ? "#0ea5e9" : "#1e293b";
+        if (b) {
+            b.style.background = (i === idx) ? "#1e293b" : "#11161d";
+            b.style.color = (i === idx) ? "#fbbf24" : "#94a3b8";
+            b.style.borderColor = (i === idx) ? "#f59e0b" : "#1e293b";
+        }
     });
     filterLawsView();
 };
 
 window.filterLawsView = function() {
     const box = document.getElementById("law-content-box");
-    const item = loadedLawsList[activeLawIdx];
-    if (!item) return;
     const q = document.getElementById("law-search-input").value.trim().toLowerCase();
-    const text = item.content || "";
 
-    if (!q) {
-        if (activeLawIdx === 0) {
-            box.innerHTML = '<div style="color:#94a3b8; margin-bottom:10px;">Выберите кодекс ниже или введите статью/слово в поиск сверху (ИИ не используется):</div>' +
-                loadedLawsList.slice(1).map((law, i) =>
-                    '<div onclick="selectLawTab(' + (i + 1) + ')" style="background:#16202c; border:1px solid #1e3a5f; color:#38bdf8; padding:10px 12px; border-radius:8px; margin-bottom:6px; font-weight:bold; cursor:pointer;">' + (i + 1) + '. ' + (law.title || law.id) + '</div>'
-                ).join("");
+    const filtered = parsedLawCards.filter(c => {
+        if (activeLawIdx !== 0 && c.lawIdx !== activeLawIdx) return false;
+        if (!q) return true;
+        return c.num.toLowerCase().includes(q) ||
+               c.title.toLowerCase().includes(q) ||
+               c.tag.toLowerCase().includes(q) ||
+               c.body.join(" ").toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+        const rawLaw = loadedLawsList[activeLawIdx];
+        if (rawLaw && rawLaw.content && !q) {
+            box.innerText = rawLaw.content;
         } else {
-            box.innerText = text;
+            box.innerHTML = '<div style="text-align:center; color:#64748b; padding:24px;">По запросу «' + q + '» статей не найдено.</div>';
         }
         return;
     }
 
-    const lines = text.split("\n");
-    const found = [];
-    let currentTitle = item.title;
-    for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith("===") && lines[i].endsWith("===")) currentTitle = lines[i].replace(/=/g, "").trim();
-        if (lines[i].toLowerCase().includes(q)) {
-            const prefix = activeLawIdx === 0 ? "[" + currentTitle + "]\n" : "";
-            found.push(prefix + lines.slice(Math.max(0, i - 1), i + 6).join("\n"));
-        }
-    }
-    box.innerText = found.length > 0 ? found.join("\n\n-------------------\n\n") : "По запросу «" + q + "» ничего не найдено.";
+    box.innerHTML = filtered.slice(0, 80).map(c => {
+        const fullBody = c.body.join("\n");
+        const punMatch = fullBody.match(/(?:лишением свободы|арест(?:ом)?|штраф(?:ом)?|срок(?:ом)?)\s+[^.;\n]{3,45}/i);
+        const badgeColor = c.tag === "УК" ? "#ef4444" : (c.tag === "КоАП" ? "#f59e0b" : "#0ea5e9");
+
+        return '<div style="background:#161b26; border:1px solid #232a3b; border-radius:14px; padding:14px; margin-bottom:10px;">' +
+            '<div style="display:inline-block; background:' + badgeColor + '; color:#fff; font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px; margin-bottom:8px;">' + c.tag + ' ст. ' + c.num + '</div>' +
+            '<div style="font-size:15.5px; font-weight:800; color:#f8fafc; margin-bottom:8px; line-height:1.35;">' + c.title + '</div>' +
+            (fullBody ? '<div style="font-size:12.5px; color:#94a3b8; line-height:1.45; margin-bottom:8px; white-space:pre-wrap;">' + fullBody + '</div>' : '') +
+            '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+                (punMatch ? '<span style="background:#1e2536; border:1px solid #2d374d; color:#cbd5e1; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚖ ' + punMatch[0] + '</span>' : '') +
+                '<span style="background:#1e2536; border:1px solid #2d374d; color:#94a3b8; font-size:11.5px; padding:4px 10px; border-radius:8px;">' + c.fullLaw + '</span>' +
+            '</div>' +
+        '</div>';
+    }).join("");
 };
+
 
 let loadedNrpList = [], activeNrpIdx = 0;
 
