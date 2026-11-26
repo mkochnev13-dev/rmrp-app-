@@ -164,7 +164,9 @@ button:active { transform: scale(0.94); }
     <div style="text-align:center; font-size:11.5px; color:#64748b; margin-top:8px;">Нажмите на картинку, чтобы увеличить в полный размер</div>
 </div>
 
-    <div style="display:flex; gap:5px; position:relative;">
+    <<div class="header">
+    <div class="logo" style="margin-right:auto;"><span style="color:#38bdf8;">RMRPЮрист</span></div>
+    <div style="display:flex; gap:4px; position:relative;">
         <button class="role-btn" onclick="openLawsModal()" style="background:#0f2942; border-color:#0284c7;">Законка</button>
         <button class="role-btn" onclick="toggleHelperMenu(event)" style="background:#1e293b; color:#e2e8f0; border-color:#475569;">Помощник ▾</button>
 
@@ -174,6 +176,13 @@ button:active { transform: scale(0.94); }
             <button onclick="document.getElementById('events-modal').style.display='flex'; closeHelperMenu();" style="background:#3b1d5e; color:#d8b4fe; border:1px solid #7e22ce; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🎉 События</button>
         </div>
     </div>
+    <div style="display:flex; gap:4px; align-items:center;">
+        <button id="lex-role-btn" class="role-btn" onclick="cycleLexRole()">ОФИЦЕР</button>
+        <button class="circle-btn" onclick="document.getElementById('settings-modal').style.display='flex'" title="Настройки">&#9881;</button>
+        <button class="circle-btn" onclick="clearLexChat()" title="Очистить">&#8634;</button>
+    </div>
+</div>
+
 
 <div class="timer-bar">
     <span id="lawyer-timer-display" style="color:#94a3b8; font-weight:bold;">Адвокат: не запущен</span>
