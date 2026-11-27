@@ -198,6 +198,19 @@ button:active { transform: scale(0.94); }
     </div>
     <div id="notes-list-box" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
 </div>
+<div id="proc-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-shrink:0;">
+        <h2 style="font-size:18px; color:#7dd3fc;">Процессуальные действия</h2>
+        <button onclick="document.getElementById('proc-modal').style.display='none'" style="background:#1e293b; border:none; color:#fff; border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">✕ Закрыть</button>
+    </div>
+    <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;">
+        <button onclick="selectProcTab(0)" id="proc-tab-0" style="background:#1e293b; color:#7dd3fc; border:1px solid #0284c7; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">Задержание (Гос)</button>
+        <button onclick="selectProcTab(1)" id="proc-tab-1" style="background:#11161d; color:#94a3b8; border:1px solid #1e293b; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">Трафик-стоп (ДПС)</button>
+        <button onclick="selectProcTab(2)" id="proc-tab-2" style="background:#11161d; color:#94a3b8; border:1px solid #1e293b; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">Права задержанного</button>
+    </div>
+    <div id="proc-content-box" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+    <button onclick="resetProcChecks()" style="margin-top:8px; background:#1e293b; color:#94a3b8; border:1px solid #334155; border-radius:8px; padding:8px; font-size:12px; font-weight:bold; cursor:pointer;">↺ Сбросить все галочки</button>
+</div>
 <div class="header" style="justify-content:flex-start; gap:5px;">
     <button class="role-btn" onclick="openNotesModal()" style="background:#1c1917; color:#fdba74; border-color:#c2410c;">📝 Заметки</button>
     <div style="display:flex; gap:4px; position:relative;">
@@ -210,7 +223,8 @@ button:active { transform: scale(0.94); }
             <button onclick="document.getElementById('events-modal').style.display='flex'; closeHelperMenu();" style="background:#3b1d5e; color:#d8b4fe; border:1px solid #7e22ce; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🎉 События</button>
             <button onclick="openItemsModal(); closeHelperMenu();" style="background:#1e293b; color:#fbbf24; border:1px solid #b45309; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🔫 Оружие и маски</button>
             <button onclick="document.getElementById('supplies-modal').style.display='flex'; closeHelperMenu();" style="background:#172554; color:#93c5fd; border:1px solid #1d4ed8; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">📦 Позиции на поставках</button>
-        </div>
+            <button onclick="openProcModal(); closeHelperMenu();" style="background:#0c4a6e; color:#7dd3fc; border:1px solid #0284c7; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">📋 Процессуалка</button>
+</div>
     </div>
     <div style="display:flex; gap:4px; align-items:center;">
         <button id="lex-role-btn" class="role-btn" onclick="cycleLexRole()">ОФИЦЕР</button>
@@ -723,6 +737,59 @@ function renderPersonalNotes() {
                 '<button onclick="deletePersonalNote(' + idx + ')" style="background:#2d1518; color:#fca5a5; border:1px solid #7f1d1d; border-radius:6px; padding:4px 10px; font-size:11.5px; font-weight:bold; cursor:pointer;">Удалить</button>' +
             '</div></div>'
     ).join("");
+}
+
+const procGuides = [
+    {
+        steps: [
+            { title: "1. Надеть наручники / пресечь нарушение", desc: "Обеспечить безопасность, применить спецсредства согласно стадиям применения силы." },
+            { title: "2. Представиться и предъявить жетон / удостоверение", desc: "Назвать звание, ведомство, ФИО или номер жетона/нашивки." },
+            { title: "3. Разъяснить причину и статью задержания", desc: "Чётко озвучить, по какой именно статье УК / КоАП задержан гражданин." },
+            { title: "4. Провести первичный обыск", desc: "Изъять холодное и огнестрельное оружие, средства связи при необходимости, проверить документы." },
+            { title: "5. Зачитать правило Миранды", desc: "Озвучить право хранить молчание, право на адвоката и один телефонный звонок (до 2-3 мин)." },
+            { title: "6. Доставить в КПЗ и реализовать права", desc: "Вызвать адвоката в рацию департамента (запустить таймер 5/10 мин), дать звонок по требованию." },
+            { title: "7. Вторичный обыск, розыск и арест", desc: "После приезда адвоката или истечения времени — изъять нелегал, выдать розыск по статьям и посадить в КПЗ." }
+        ]
+    },
+    {
+        steps: [
+            { title: "1. Требование об остановке в мегафон", desc: "Чётко указать марку/цвет авто и номер, потребовать прижаться к обочине и заглушить двигатель." },
+            { title: "2. Парковка патрульного авто", desc: "Встать позади автомобиля нарушителя со смещением левее для контроля двери водителя." },
+            { title: "3. Представиться и назвать причину остановки", desc: "Подойти к водительскому окну, показать удостоверение и назвать конкретную статью ПДД/КоАП." },
+            { title: "4. Проверка документов", desc: "Запросить паспорт, водительское удостоверение и техпаспорт (СТС) на транспортное средство." },
+            { title: "5. Вынесение решения", desc: "Выписать административный штраф по КоАП или сделать устное предупреждение при малозначительности." }
+        ]
+    },
+    {
+        steps: [
+            { title: "1. Проверка законности задержания", desc: "Сотрудник обязан представиться, показать жетон/удостоверение и назвать конкретную статью." },
+            { title: "2. Правило Миранды", desc: "Если Миранда не зачитана до проведения допроса/посадки в КПЗ — это основание для освобождения / жалобы." },
+            { title: "3. Право на адвоката и звонок", desc: "Требуйте вызова государственного/частного адвоката и телефонный звонок до оформления ареста." },
+            { title: "4. Фиксация нарушений", desc: "Запомните жетон/ID сотрудника, время задержания и запросите видеофиксацию нарушения через адвоката или суд." }
+        ]
+    }
+];
+
+let activeProcTab = 0, procCheckedState = {};
+window.openProcModal = function() { document.getElementById("proc-modal").style.display = "flex"; selectProcTab(activeProcTab); };
+window.selectProcTab = function(idx) {
+    activeProcTab = idx;
+    [0, 1, 2].forEach(i => {
+        const b = document.getElementById("proc-tab-" + i);
+        if (b) { b.style.background = (i === idx) ? "#1e293b" : "#11161d"; b.style.color = (i === idx) ? "#7dd3fc" : "#94a3b8"; b.style.borderColor = (i === idx) ? "#0284c7" : "#1e293b"; }
+    });
+    renderProcSteps();
+};
+window.toggleProcStep = function(key) { procCheckedState[key] = !procCheckedState[key]; renderProcSteps(); };
+window.resetProcChecks = function() { procCheckedState = {}; renderProcSteps(); };
+function renderProcSteps() {
+    const box = document.getElementById("proc-content-box");
+    box.innerHTML = procGuides[activeProcTab].steps.map((st, idx) => {
+        const key = activeProcTab + "_" + idx, done = !!procCheckedState[key];
+        return '<div onclick="toggleProcStep(\'' + key + '\')" style="background:' + (done ? '#0f291e' : '#161b26') + '; border:1px solid ' + (done ? '#059669' : '#232a3b') + '; border-radius:12px; padding:12px; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">' +
+            '<div style="width:20px; height:20px; border-radius:6px; border:2px solid ' + (done ? '#10b981' : '#475569') + '; background:' + (done ? '#10b981' : 'transparent') + '; color:#fff; font-size:12px; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">' + (done ? '✓' : '') + '</div>' +
+            '<div><div style="font-size:14px; font-weight:bold; color:' + (done ? '#6ee7b7' : '#f8fafc') + '; margin-bottom:4px; text-decoration:' + (done ? 'line-through' : 'none') + ';">' + st.title + '</div><div style="font-size:12px; color:#94a3b8; line-height:1.4;">' + st.desc + '</div></div></div>';
+    }).join("");
 }
 
 const lexRoles = ["ОФИЦЕР", "АДВОКАТ", "ГРАЖДАНИН"];
