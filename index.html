@@ -33,7 +33,7 @@ body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; height: 100
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes popIn { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes msgSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-#settings-modal[style*="flex"], #laws-modal[style*="flex"], #nrp-modal[style*="flex"], #schedule-modal[style*="flex"], #events-modal[style*="flex"], #items-modal[style*="flex"] { animation: fadeIn 0.2s ease-out; }
+#settings-modal[style*="flex"], #laws-modal[style*="flex"], #nrp-modal[style*="flex"], #schedule-modal[style*="flex"], #events-modal[style*="flex"], #items-modal[style*="flex"], #supplies-modal[style*="flex"] { animation: fadeIn 0.2s ease-out; }
 #settings-modal .card { animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 #lex-chat > div { animation: msgSlide 0.25s ease-out; }
 body, .header, .timer-bar, .presets-bar, .input-area, .card, .setting-row { transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
@@ -152,14 +152,13 @@ button:active { transform: scale(0.94); }
     <div id="sched-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;"></div>
     <div id="sched-content-box" style="flex:1; overflow-y:auto; background:#0b0f14; border-radius:10px;">Загрузка графика...</div>
 </div>
-
 <div id="events-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-shrink:0;">
         <h2 style="font-size:18px; color:#d8b4fe;">Серверные события RMRP</h2>
         <button onclick="document.getElementById('events-modal').style.display='none'" style="background:#1e293b; border:none; color:#fff; border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">✕ Закрыть</button>
     </div>
     <div style="flex:1; overflow:auto; background:#11161d; border:1px solid #1e293b; border-radius:12px; padding:8px; display:flex; align-items:flex-start; justify-content:center;">
-        <img src="events.jpg?v=1" alt="Расписание серверных событий" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
+        <img src="events.jpeg?v=1" alt="Расписание серверных событий" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
     </div>
     <div style="text-align:center; font-size:11.5px; color:#64748b; margin-top:8px;">Нажмите на картинку, чтобы приблизить / отдалить</div>
 </div>
@@ -169,52 +168,38 @@ button:active { transform: scale(0.94); }
         <h2 style="font-size:18px; color:#fbbf24;">Разрешённое оружие и маски</h2>
         <button onclick="document.getElementById('items-modal').style.display='none'" style="background:#1e293b; border:none; color:#fff; border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">✕ Закрыть</button>
     </div>
-    <input type="text" id="items-search-input" oninput="filterItemsView()" placeholder="Поиск (ПМ, мед. маска, дробовик, балаклава)..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#11161d; color:#fff; margin-bottom:8px; outline:none;">
+    <input type="text" id="items-search-input" oninput="filterItemsView()" placeholder="Поиск (P2000, мед. маска, Скорпион, бронежилет)..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#11161d; color:#fff; margin-bottom:8px; outline:none;">
     <div id="items-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;"></div>
     <div id="items-content-box" style="flex:1; overflow-y:auto; background:#0b0f14; border-radius:10px;">Загрузка списка...</div>
 </div>
+
 <div id="supplies-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-shrink:0;">
         <h2 style="font-size:18px; color:#93c5fd;">Позиции на поставках (5 схем)</h2>
         <button onclick="document.getElementById('supplies-modal').style.display='none'" style="background:#1e293b; border:none; color:#fff; border-radius:8px; padding:6px 12px; font-weight:bold; cursor:pointer;">✕ Закрыть</button>
     </div>
     <div style="flex:1; overflow:auto; background:#11161d; border:1px solid #1e293b; border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:14px;">
-        <div>
-            <div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 1</div>
-            <img src="post1.jpg?v=1" alt="Позиция 1" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
-        </div>
-        <div>
-            <div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 2</div>
-            <img src="post2.jpg?v=1" alt="Позиция 2" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
-        </div>
-        <div>
-            <div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 3</div>
-            <img src="post3.jpg?v=1" alt="Позиция 3" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
-        </div>
-        <div>
-            <div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 4</div>
-            <img src="post4.jpg?v=1" alt="Позиция 4" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
-        </div>
-        <div>
-            <div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 5</div>
-            <img src="post5.jpg?v=1" alt="Позиция 5" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'">
-        </div>
+        <div><div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 1</div><img src="post1.jpeg?v=1" alt="Позиция 1" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'"></div>
+        <div><div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 2</div><img src="post2.jpeg?v=1" alt="Позиция 2" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'"></div>
+        <div><div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 3</div><img src="post3.jpeg?v=1" alt="Позиция 3" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'"></div>
+        <div><div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 4</div><img src="post4.jpeg?v=1" alt="Позиция 4" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'"></div>
+        <div><div style="color:#93c5fd; font-size:12px; font-weight:bold; margin-bottom:4px;">Схема 5</div><img src="post5.jpeg?v=1" alt="Позиция 5" style="max-width:100%; height:auto; border-radius:8px; display:block;" onclick="this.style.maxWidth = this.style.maxWidth === 'none' ? '100%' : 'none'"></div>
     </div>
     <div style="text-align:center; font-size:11.5px; color:#64748b; margin-top:8px;">Нажмите на любую схему, чтобы приблизить / отдалить</div>
 </div>
-<div class="header" style="justify-content:flex-start; gap:6px;">
+<div class="header">
     <div class="logo"><span style="color:#38bdf8;">RMRPЮрист</span></div>
     <div style="display:flex; gap:4px; position:relative;">
         <button class="role-btn" onclick="openLawsModal()" style="background:#0f2942; border-color:#0284c7;">Законка</button>
         <button class="role-btn" onclick="toggleHelperMenu(event)" style="background:#1e293b; color:#e2e8f0; border-color:#475569;">Помощник ▾</button>
 
-        <div id="helper-dropdown" style="display:none; position:absolute; top:34px; left:0; background:#11161d; border:1px solid #334155; border-radius:12px; padding:6px; min-width:165px; z-index:9999; box-shadow:0 12px 30px rgba(0,0,0,0.8); flex-direction:column; gap:5px;">
+        <div id="helper-dropdown" style="display:none; position:absolute; top:34px; left:0; background:#11161d; border:1px solid #334155; border-radius:12px; padding:6px; min-width:175px; z-index:9999; box-shadow:0 12px 30px rgba(0,0,0,0.8); flex-direction:column; gap:5px;">
             <button onclick="openNrpModal(); closeHelperMenu();" style="background:#2d1518; color:#fca5a5; border:1px solid #7f1d1d; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🚫 Правила НРП</button>
             <button onclick="openScheduleModal(); closeHelperMenu();" style="background:#064e3b; color:#6ee7b7; border:1px solid #059669; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🕒 График наборов</button>
             <button onclick="document.getElementById('events-modal').style.display='flex'; closeHelperMenu();" style="background:#3b1d5e; color:#d8b4fe; border:1px solid #7e22ce; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🎉 События</button>
             <button onclick="openItemsModal(); closeHelperMenu();" style="background:#1e293b; color:#fbbf24; border:1px solid #b45309; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🔫 Оружие и маски</button>
             <button onclick="document.getElementById('supplies-modal').style.display='flex'; closeHelperMenu();" style="background:#172554; color:#93c5fd; border:1px solid #1d4ed8; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">📦 Позиции на поставках</button>
- </div>
+        </div>
     </div>
     <div style="display:flex; gap:4px; align-items:center;">
         <button id="lex-role-btn" class="role-btn" onclick="cycleLexRole()">ОФИЦЕР</button>
@@ -274,13 +259,10 @@ function playBeep() {
 }
 
 window.startLawyerTimer = function(minutes) {
-    clearInterval(timerInterval);
-    timerSecondsLeft = minutes * 60;
-    const disp = document.getElementById("lawyer-timer-display");
-    disp.style.color = "#38bdf8";
+    clearInterval(timerInterval); timerSecondsLeft = minutes * 60;
+    const disp = document.getElementById("lawyer-timer-display"); disp.style.color = "#38bdf8";
     const tick = () => {
-        const m = String(Math.floor(timerSecondsLeft / 60)).padStart(2, "0");
-        const s = String(timerSecondsLeft % 60).padStart(2, "0");
+        const m = String(Math.floor(timerSecondsLeft / 60)).padStart(2, "0"), s = String(timerSecondsLeft % 60).padStart(2, "0");
         disp.innerText = "Ожидание адвоката: " + m + ":" + s;
         if (timerSecondsLeft <= 0) {
             clearInterval(timerInterval); disp.style.color = "#ef4444"; disp.innerText = "Время ожидания адвоката истекло!"; playBeep();
@@ -291,11 +273,7 @@ window.startLawyerTimer = function(minutes) {
     tick(); timerInterval = setInterval(tick, 1000);
 };
 
-window.stopLawyerTimer = function() {
-    clearInterval(timerInterval);
-    const disp = document.getElementById("lawyer-timer-display");
-    disp.style.color = "#94a3b8"; disp.innerText = "Адвокат: не запущен";
-};
+window.stopLawyerTimer = function() { clearInterval(timerInterval); const disp = document.getElementById("lawyer-timer-display"); disp.style.color = "#94a3b8"; disp.innerText = "Адвокат: не запущен"; };
 
 function startResetCountdown() {
     clearInterval(resetCountdownInterval);
@@ -305,9 +283,7 @@ function startResetCountdown() {
         if (!currentLastReset) { timerEl.innerText = "Обновляется каждые 24 часа"; return; }
         const diff = new Date(currentLastReset).getTime() + 86400000 - Date.now();
         if (diff <= 0) { timerEl.innerText = "Доступно обновление (сделайте любой запрос)"; timerEl.style.color = "#34d399"; return; }
-        const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
-        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
-        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
+        const h = String(Math.floor(diff / 3600000)).padStart(2, "0"), m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0"), s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
         timerEl.style.color = "#64748b"; timerEl.innerText = "Обновление через: " + h + "ч " + m + "м " + s + "с";
     };
     tickReset(); resetCountdownInterval = setInterval(tickReset, 1000);
@@ -331,7 +307,6 @@ function updateSubDisplay(expiresAtStr, used, limit, lastResetStr) {
     }
     startResetCountdown();
 }
-
 async function getDeviceId() {
     try {
         if (window.pywebview && window.pywebview.api && window.pywebview.api.get_hwid) {
@@ -345,23 +320,34 @@ async function getDeviceId() {
 
 async function checkAccess() {
     currentDevId = await getDeviceId();
+    const savedKey = localStorage.getItem("rmrp_saved_key");
     const lockScreen = document.getElementById("rmrp-lock-screen"), lockMsg = document.getElementById("lock-msg"), lockForm = document.getElementById("lock-form");
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/license_keys?device_id=eq." + currentDevId + "&select=*", { headers: sbHeaders, signal: controller.signal });
+        const query = savedKey ? "key_code=eq." + encodeURIComponent(savedKey) : "device_id=eq." + encodeURIComponent(currentDevId);
+        const res = await fetch(SB_BASE + "/rest/v1/license_keys?" + query + "&select=*", { headers: sbHeaders, signal: controller.signal });
         clearTimeout(timer);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
             const key = data.at(0);
             if (!key.is_banned && new Date(key.expires_at) >= new Date()) {
+                if (key.device_id !== currentDevId && currentDevId.startsWith("win_")) {
+                    await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(key.key_code), { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ device_id: currentDevId }) });
+                }
+                localStorage.setItem("rmrp_saved_key", key.key_code);
                 updateSubDisplay(key.expires_at, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
                 lockScreen.style.display = "none"; applySavedSettings(); return;
             }
+            localStorage.removeItem("rmrp_saved_key");
             lockMsg.innerText = key.is_banned ? "Ваш ключ заблокирован." : "Срок подписки истек. Введите новый ключ:";
-        } else { lockMsg.innerText = "Введите лицензионный ключ:"; }
+        } else {
+            localStorage.removeItem("rmrp_saved_key");
+            lockMsg.innerText = "Введите лицензионный ключ:";
+        }
     } catch (e) { clearTimeout(timer); lockMsg.innerText = "Введите ключ или проверьте сеть:"; }
     lockForm.style.display = "block";
 }
+
 window.activateKey = async function() {
     const code = document.getElementById("license-input").value.trim().toUpperCase();
     if (!code) return alert("Введите ключ!");
@@ -382,11 +368,11 @@ window.activateKey = async function() {
         else if (new Date(expDate) < new Date()) { lockMsg.innerText = "Срок ключа истек."; return; }
         const patchRes = await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(code), { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ device_id: currentDevId, expires_at: expDate }) });
         if (!patchRes.ok) { lockMsg.innerText = "Ошибка записи (" + patchRes.status + ")."; return; }
+        localStorage.setItem("rmrp_saved_key", code);
         updateSubDisplay(expDate, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
         document.getElementById("rmrp-lock-screen").style.display = "none"; applySavedSettings();
     } catch (e) { clearTimeout(t); lockMsg.innerText = "Тайм-аут или ошибка сети. Попробуйте ещё раз."; }
 };
-
 window.setAppColor = function(mainHex, lightHex) {
     localStorage.setItem("rmrp_color_main", mainHex); localStorage.setItem("rmrp_color_light", lightHex);
     let tag = document.getElementById("dyn-accent");
@@ -399,9 +385,9 @@ window.setBgTheme = function(mode) {
     let tag = document.getElementById("dyn-bg");
     if (!tag) { tag = document.createElement("style"); tag.id = "dyn-bg"; document.head.appendChild(tag); }
     if (mode === "oled") {
-        tag.innerHTML = "body, .setting-row, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #000000 !important; color: #f4f4f5 !important; } .header, .timer-bar, .presets-bar, .input-area, .card { background: #09090b !important; border-color: #27272a !important; }";
+        tag.innerHTML = "body, .setting-row, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #supplies-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #000000 !important; color: #f4f4f5 !important; } .header, .timer-bar, .presets-bar, .input-area, .card { background: #09090b !important; border-color: #27272a !important; }";
     } else if (mode === "light") {
-        tag.innerHTML = "body, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #f1f5f9 !important; color: #0f172a !important; } .header, .presets-bar, .input-area, .card { background: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; } .timer-bar, .setting-row { background: #e2e8f0 !important; border-color: #cbd5e1 !important; } #lex-input, .card h2 { color: #0f172a !important; } .preset-chip, .circle-btn, .timer-btn { background: #e2e8f0 !important; color: #334155 !important; border-color: #cbd5e1 !important; }";
+        tag.innerHTML = "body, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #supplies-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #f1f5f9 !important; color: #0f172a !important; } .header, .presets-bar, .input-area, .card { background: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; } .timer-bar, .setting-row { background: #e2e8f0 !important; border-color: #cbd5e1 !important; } #lex-input, .card h2 { color: #0f172a !important; } .preset-chip, .circle-btn, .timer-btn { background: #e2e8f0 !important; color: #334155 !important; border-color: #cbd5e1 !important; }";
     } else { tag.innerHTML = ""; }
 };
 
@@ -441,16 +427,8 @@ function applySavedSettings() {
     if (sBg) setBgTheme(sBg);
 }
 
-window.changeAppHotkey = async function(newKey) {
-    localStorage.setItem("rmrp_hotkey", newKey); updateMicKeyUI();
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.set_hotkey) await window.pywebview.api.set_hotkey(newKey);
-};
-
-window.changeAppOpacity = async function(val) {
-    document.getElementById("opacity-val").innerText = val + "%"; localStorage.setItem("rmrp_opacity", val);
-    if (window.pywebview && window.pywebview.api && window.pywebview.api.set_opacity) await window.pywebview.api.set_opacity(parseInt(val));
-};
-
+window.changeAppHotkey = async function(newKey) { localStorage.setItem("rmrp_hotkey", newKey); updateMicKeyUI(); if (window.pywebview && window.pywebview.api && window.pywebview.api.set_hotkey) await window.pywebview.api.set_hotkey(newKey); };
+window.changeAppOpacity = async function(val) { document.getElementById("opacity-val").innerText = val + "%"; localStorage.setItem("rmrp_opacity", val); if (window.pywebview && window.pywebview.api && window.pywebview.api.set_opacity) await window.pywebview.api.set_opacity(parseInt(val)); };
 window.toggleStealthMode = async function() {
     const btn = document.getElementById("stealth-toggle-btn");
     if (window.pywebview && window.pywebview.api && window.pywebview.api.toggle_stealth) {
@@ -459,21 +437,9 @@ window.toggleStealthMode = async function() {
     } else { alert("Доступно только в ПК-версии (.exe)."); }
 };
 
-window.toggleHelperMenu = function(e) {
-    if (e) e.stopPropagation();
-    const menu = document.getElementById("helper-dropdown");
-    menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
-};
-
-window.closeHelperMenu = function() {
-    const menu = document.getElementById("helper-dropdown");
-    if (menu) menu.style.display = "none";
-};
-
-document.addEventListener("click", function(e) {
-    const menu = document.getElementById("helper-dropdown");
-    if (menu && menu.style.display === "flex" && !menu.contains(e.target)) menu.style.display = "none";
-});
+window.toggleHelperMenu = function(e) { if (e) e.stopPropagation(); const m = document.getElementById("helper-dropdown"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; };
+window.closeHelperMenu = function() { const m = document.getElementById("helper-dropdown"); if (m) m.style.display = "none"; };
+document.addEventListener("click", function(e) { const m = document.getElementById("helper-dropdown"); if (m && m.style.display === "flex" && !m.contains(e.target)) m.style.display = "none"; });
 let loadedLawsList = [], activeLawIdx = 0, parsedLawCards = [];
 
 function parseLawsToCards(data) {
@@ -496,7 +462,7 @@ function parseLawsToCards(data) {
             const artMatch = t.match(/^(?:Статья|Ст\.?)\s*([0-9]+(?:\.[0-9]+)*)[.\s:—-]*(.*)/i);
             if (artMatch) {
                 if (cur) cards.push(cur);
-                cur = { lawIdx: lawIdx + 1, tag: shortTag, fullLaw: rawTitle, num: artMatch[1], title: artMatch[2] || t, body: [] };
+                cur = { lawIdx: lawIdx + 1, tag: shortTag, fullLaw: rawTitle, num: artMatch, title: artMatch || t, body: [] };
             } else if (cur) { cur.body.push(t); }
         });
         if (cur) cards.push(cur);
@@ -548,7 +514,7 @@ window.filterLawsView = function() {
             '<div style="font-size:15.5px; font-weight:800; color:#f8fafc; margin-bottom:8px; line-height:1.35;">' + c.title + '</div>' +
             (fullBody ? '<div style="font-size:12.5px; color:#94a3b8; line-height:1.45; margin-bottom:8px; white-space:pre-wrap;">' + fullBody + '</div>' : '') +
             '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
-                (punMatch ? '<span style="background:#1e2536; border:1px solid #2d374d; color:#cbd5e1; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚖ ' + punMatch[0] + '</span>' : '') +
+                (punMatch ? '<span style="background:#1e2536; border:1px solid #2d374d; color:#cbd5e1; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚖ ' + punMatch + '</span>' : '') +
                 '<span style="background:#1e2536; border:1px solid #2d374d; color:#94a3b8; font-size:11.5px; padding:4px 10px; border-radius:8px;">' + c.fullLaw + '</span>' +
             '</div></div>';
     }).join("");
@@ -574,7 +540,7 @@ function parseNrpToCards(data) {
             const ruleMatch = t.match(/^(?:Пункт|Правило|Раздел)?\s*([0-9]+(?:\.[0-9]+)+)[.\s:—-]*(.*)/i);
             if (ruleMatch) {
                 if (cur) cards.push(cur);
-                cur = { secIdx: secIdx + 1, tag: shortTag, fullSec: rawTitle, num: ruleMatch[1], title: ruleMatch[2] || t, body: [] };
+                cur = { secIdx: secIdx + 1, tag: shortTag, fullSec: rawTitle, num: ruleMatch, title: ruleMatch || t, body: [] };
             } else if (cur) { cur.body.push(t); }
         });
         if (cur) cards.push(cur);
@@ -625,7 +591,7 @@ window.filterNrpView = function() {
             '<div style="font-size:15.5px; font-weight:800; color:#f8fafc; margin-bottom:8px; line-height:1.35;">' + c.title + '</div>' +
             (fullBody ? '<div style="font-size:12.5px; color:#94a3b8; line-height:1.45; margin-bottom:8px; white-space:pre-wrap;">' + fullBody + '</div>' : '') +
             '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
-                (punMatch ? '<span style="background:#261822; border:1px solid #572536; color:#fca5a5; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚠ ' + punMatch[0] + '</span>' : '') +
+                (punMatch ? '<span style="background:#261822; border:1px solid #572536; color:#fca5a5; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚠ ' + punMatch + '</span>' : '') +
                 '<span style="background:#1e2536; border:1px solid #2d374d; color:#94a3b8; font-size:11.5px; padding:4px 10px; border-radius:8px;">' + c.fullSec + '</span>' +
             '</div></div>';
     }).join("");
