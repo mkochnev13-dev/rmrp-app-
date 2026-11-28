@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMRPЮрист — Админка ключей</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; padding: 16px; display: flex; justify-content: center; }
+.wrap { width: 100%; max-width: 680px; }
+.card { background: #11161d; border: 1px solid #1e293b; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+h2 { color: #38bdf8; font-size: 19px; margin-bottom: 12px; }
+label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+input, select { width: 100%; padding: 10px; border-radius: 9px; border: 1px solid #334155; background: #0b0f14; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > div { flex: 1; min-width: 120px; }
+button { padding: 10px 14px; border-radius: 9px; border: none; font-weight: bold; font-size: 13px; cursor: pointer; }
+.btn-blue { background: #0ea5e9; color: #fff; width: 100%; }
+.btn-green { background: #059669; color: #fff; }
+.btn-red { background: #dc2626; color: #fff; }
+.btn-gray { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+.key-item { background: #161b26; border: 1px solid #232a3b; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.badge { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div id="auth-box" class="card">
+        <h2>Вход в админ-панель</h2>
+        <label>Пароль администратора</label>
+        <input type="password" id="adm-pass" placeholder="Введите пароль..." onkeydown="if(event.key==='Enter') loginAdmin()">
+        <label>GitHub Token (ghp_... с правом repo)</label>
+        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <button class="btn-blue" onclick="loginAdmin()">Войти и загрузить ключи</button>
+    </div>
+
+    <div id="panel-box" style="display:none;">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h2 style="margin:0;">Генератор ключей</h2>
+                <button class="btn-gray" onclick="loadKeys()">↻ Обновить</button>
+            </div>
+            <div class="row">
+                <div>
+                    <label>Код ключа (или авто)</label>
+                    <input type="text" id="new-code" placeholder="RMRP-XXXX-XXXX">
+                </div>
+                <div>
+                    <label>Срок (дней)</label>
+                    <select id="new-days">
+                        <option value="1">1 день (Тест)</option>
+                        <option value="7">7 дней</option>
+                        <option value="14">14 дней</option>
+                        <option value="30" selected>30 дней</option>
+                        <option value="90">90 дней</option>
+                        <option value="3650">Навсегда (10 лет)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Лимит ИИ / день</label>
+                    <input type="number" id="new-limit" value="50">
+                </div>
+            </div>
+            <div class="row">
+                <button class="btn-gray" onclick="genRandomCode()" style="flex:1;">🎲 Сгенерировать код</button>
+                <button class="btn-green" onclick="createKey()" style="flex:2;">+ Создать и сохранить в GitHub</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h2 style="margin:0;">Список ключей (<span id="keys-count">0</span>)</h2>
+                <input type="text" id="search-key" oninput="renderKeys()" placeholder="Поиск ключа или HWID..." style="max-width:220px; margin:0; padding:7px 10px; font-size:13px;">
+            </div>
+            <div id="keys-list">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const ADMIN_PASS = "RMRP2026";
+const GH_OWNER = "mkochnev13-dev";
+const GH_REPO = "rmrp-app-";
+const GH_FILE = "keys.json";
+
+let keysData = [], fileSha = "";
+
+window.onload = () => {
+    const savedTok = localStorage.getItem("rmrp_gh_token");
+    if (savedTok) document.getElementById("gh-token").value = savedTok;
+    genRandomCode();
+};
+
+function genRandomCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const part = () => Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    document.getElementById("new-code").value = "RMRP-" + part() + "-" + part();
+}
+
+async function loginAdmin() {
+    const pass = document.getElementById("adm-pass").value;
+    const tok = document.getElementById("gh-token").value.trim();
+    if (pass !== ADMIN_PASS) return alert("Неверный пароль!");
+    if (!tok) return alert("Введите GitHub Token!");
+    localStorage.setItem("rmrp_gh_token", tok);
+    document.getElementById("auth-box").style.display = "none";
+    document.getElementById("panel-box").style.display = "block";
+    await loadKeys();
+}
+
+async function loadKeys() {
+    const tok = localStorage.getItem("rmrp_gh_token");
+    const listEl = document.getElementById("keys-list");
+    listEl.innerText = "Загрузка из GitHub...";
+    try {
+        const res = await fetch(`https://github.com{GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=main&t=${Date.now()}`, {
+            headers: { "Authorization": "Bearer " + tok, "Accept": "application/vnd.github+json" }
+        });
+        if (!res.ok) throw new Error("Ошибка GitHub API: " + res.status);
+        const json = await res.json();
+        fileSha = json.sha;
+        const decoded = decodeURIComponent(escape(atob(json.content.replace(/\n/g, ""))));
+        keysData = JSON.parse(decoded);
+        renderKeys();
+    } catch (e) { listEl.innerText = "Ошибка: " + e.message; }
+}
+
+async function saveKeysToGithub(commitMsg) {
+    const tok = localStorage.getItem("rmrp_gh_token");
+    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(keysData, null, 2))));
+    const res = await fetch(`https://github.com{GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + tok, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify({ message: commitMsg, content: contentB64, sha: fileSha })
+    });
+    if (!res.ok) throw new Error("Не удалось сохранить в GitHub: " + res.status);
+    const data = await res.json();
+    fileSha = data.content.sha;
+    renderKeys();
+}
+
+async function createKey() {
+    const code = document.getElementById("new-code").value.trim().toUpperCase();
+    const days = parseInt(document.getElementById("new-days").value) || 30;
+    const limit = parseInt(document.getElementById("new-limit").value) || 50;
+    if (!code) return alert("Введите код ключа!");
+    if (keysData.some(k => k.key_code === code)) return alert("Такой ключ уже существует!");
+
+    keysData.unshift({ key_code: code, device_id: null, days: days, expires_at: null, is_banned: false, requests_limit: limit });
+    try {
+        await saveKeysToGithub("Add key " + code);
+        navigator.clipboard.writeText(code).catch(() => {});
+        alert("Ключ " + code + " создан и скопирован в буфер обмена!");
+        genRandomCode();
+    } catch (e) { alert(e.message); }
+}
+
+async function toggleBan(idx) {
+    keysData[idx].is_banned = !keysData[idx].is_banned;
+    await saveKeysToGithub("Toggle ban " + keysData[idx].key_code);
+}
+
+async function resetDevice(idx) {
+    keysData[idx].device_id = null;
+    await saveKeysToGithub("Reset device " + keysData[idx].key_code);
+}
+
+async function deleteKey(idx) {
+    if (!confirm("Удалить ключ " + keysData[idx].key_code + "?")) return;
+    const removed = keysData.splice(idx, 1)[0];
+    await saveKeysToGithub("Delete key " + removed.key_code);
+}
+
+function copyCode(code, btn) {
+    navigator.clipboard.writeText(code);
+    const old = btn.innerText; btn.innerText = "✓";
+    setTimeout(() => btn.innerText = old, 1000);
+}
+
+function renderKeys() {
+    const q = document.getElementById("search-key").value.trim().toLowerCase();
+    const filtered = keysData.map((k, idx) => ({...k, _idx: idx})).filter(k => !q || (k.key_code || "").toLowerCase().includes(q) || (k.device_id || "").toLowerCase().includes(q));
+    document.getElementById("keys-count").innerText = filtered.length;
+    document.getElementById("keys-list").innerHTML = filtered.map(k => {
+        const statusBadge = k.is_banned
+            ? '<span class="badge" style="background:#dc2626; color:#fff;">БАН</span>'
+            : '<span class="badge" style="background:#059669; color:#fff;">АКТИВЕН (' + (k.days || 30) + ' дн.)</span>';
+        return `<div class="key-item">
+            <div>
+                <div style="font-weight:bold; font-size:15px; color:#f8fafc; margin-bottom:4px;">${k.key_code} ${statusBadge}</div>
+                <div style="font-size:12px; color:#94a3b8;">HWID: ${k.device_id || "не привязан"} • Лимит: ${k.requests_limit || 50}/день</div>
+            </div>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <button class="btn-gray" onclick="copyCode('${k.key_code}', this)">Копировать</button>
+                <button class="btn-gray" onclick="resetDevice(${k._idx})" title="Отвязать устройство">Сброс HWID</button>
+                <button class="${k.is_banned ? 'btn-green' : 'btn-red'}" onclick="toggleBan(${k._idx})">${k.is_banned ? 'Разбан' : 'Бан'}</button>
+                <button class="btn-gray" onclick="deleteKey(${k._idx})">✕</button>
+            </div>
+        </div>`;
+    }).join("");
+}
+</script>
+</body>
+</html>
