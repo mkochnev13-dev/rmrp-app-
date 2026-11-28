@@ -13,7 +13,7 @@ body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; height: 100
 .card p { color: #94a3b8; font-size: 13.5px; margin-bottom: 14px; }
 .card input[type="text"], .card select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #334155; background: #0b0f14; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none; }
 .primary-btn { width: 100%; padding: 11px; border-radius: 10px; border: none; background: #0ea5e9; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
-.header { display: flex; justify-content: flex-start; align-items: center; padding: 10px 10px; background: #11161d; border-bottom: 1px solid #1e293b; flex-shrink: 0; gap: 5px; }
+.header { display: flex; justify-content: flex-start; align-items: center; padding: 10px; background: #11161d; border-bottom: 1px solid #1e293b; flex-shrink: 0; gap: 5px; }
 .role-btn { background: #16202c; color: #38bdf8; border: 1px solid #1e3a5f; border-radius: 14px; padding: 5px 8px; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 .timer-bar { display: flex; justify-content: space-between; align-items: center; padding: 7px 14px; background: #0e141b; border-bottom: 1px solid #1e293b; font-size: 12px; flex-shrink: 0; }
 .timer-btn { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: bold; cursor: pointer; }
@@ -33,6 +33,7 @@ button:active { transform: scale(0.94); }
 </style>
 </head>
 <body>
+
 <div id="rmrp-lock-screen">
     <div class="card" style="text-align:center;">
         <h2>RMRPЮрист</h2>
@@ -44,7 +45,6 @@ button:active { transform: scale(0.94); }
         </div>
     </div>
 </div>
-
 <div id="settings-modal" style="display:none;">
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -114,7 +114,6 @@ button:active { transform: scale(0.94); }
         <button class="primary-btn" onclick="document.getElementById('settings-modal').style.display='none'" style="background:#1e293b; margin-top:2px;">Закрыть</button>
     </div>
 </div>
-
 <div id="laws-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="font-size:18px;">Законодательство RMRP</h2>
@@ -124,6 +123,7 @@ button:active { transform: scale(0.94); }
     <div id="law-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;"></div>
     <div id="law-content-box" style="flex:1; overflow-y:auto; background:#0b0f14; border-radius:10px;">Загрузка законов...</div>
 </div>
+
 <div id="nrp-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="font-size:18px; color:#fca5a5;">Правила проекта и НРП</h2>
@@ -325,6 +325,7 @@ function updateSubDisplay(expiresAtStr, used, limit, lastResetStr) {
     }
     startResetCountdown();
 }
+
 async function getDeviceId() {
     try {
         if (window.pywebview && window.pywebview.api && window.pywebview.api.get_hwid) {
@@ -352,7 +353,7 @@ function getLocalUsage(limit) {
 
 async function checkAccess() {
     currentDevId = await getDeviceId();
-    const savedKey = localStorage.getItem("rmrp_saved_key");
+    const savedKey = (localStorage.getItem("rmrp_saved_key") || "").trim().toUpperCase();
     const cachedExp = localStorage.getItem("rmrp_cached_exp");
     const lockScreen = document.getElementById("rmrp-lock-screen"), lockMsg = document.getElementById("lock-msg"), lockForm = document.getElementById("lock-form");
 
@@ -367,11 +368,14 @@ async function checkAccess() {
         const res = await fetch("./keys.json?v=" + Date.now());
         const keys = await res.json();
         if (Array.isArray(keys)) {
-            const key = keys.find(k => (savedKey && k.key_code === savedKey) || (!savedKey && k.device_id === currentDevId));
+            const key = keys.find(k =>
+                (savedKey && (k.key_code || "").trim().toUpperCase() === savedKey) ||
+                (!savedKey && k.device_id && k.device_id === currentDevId)
+            );
             if (key) {
                 const expDate = key.expires_at || cachedExp || new Date(Date.now() + (key.days || 30) * 86400000).toISOString();
                 if (!key.is_banned && new Date(expDate) >= new Date()) {
-                    localStorage.setItem("rmrp_saved_key", key.key_code);
+                    localStorage.setItem("rmrp_saved_key", (key.key_code || savedKey).trim().toUpperCase());
                     localStorage.setItem("rmrp_cached_exp", expDate);
                     localStorage.setItem("rmrp_cached_limit", String(key.requests_limit || 50));
                     const u = getLocalUsage(key.requests_limit || 50);
@@ -389,7 +393,7 @@ async function checkAccess() {
         }
         if (!savedKey) { lockMsg.innerText = "Введите лицензионный ключ:"; lockForm.style.display = "block"; }
     } catch (e) {
-        if (lockScreen.style.display !== "none") { lockMsg.innerText = "Введите лицензионный ключ:"; lockForm.style.display = "block"; }
+        if (!savedKey) { lockMsg.innerText = "Введите лицензионный ключ:"; lockForm.style.display = "block"; }
     }
 }
 
@@ -402,7 +406,7 @@ window.activateKey = async function() {
     try {
         const res = await fetch("./keys.json?v=" + Date.now());
         const keys = await res.json();
-        const key = Array.isArray(keys) ? keys.find(k => (k.key_code || "").toUpperCase() === code) : null;
+        const key = Array.isArray(keys) ? keys.find(k => (k.key_code || "").trim().toUpperCase() === code) : null;
         if (!key) { lockMsg.innerText = "Неверный ключ!"; return; }
         if (key.is_banned) { lockMsg.innerText = "Ключ заблокирован."; return; }
         if (key.device_id && key.device_id !== currentDevId) { lockMsg.innerText = "Ключ привязан к другому устройству!"; return; }
@@ -486,7 +490,6 @@ window.toggleHelperMenu = function(e) { if (e) e.stopPropagation(); const m = do
 window.closeHelperMenu = function() { const m = document.getElementById("helper-dropdown"); if (m) m.style.display = "none"; };
 document.addEventListener("click", function(e) { const m = document.getElementById("helper-dropdown"); if (m && m.style.display === "flex" && !m.contains(e.target)) m.style.display = "none"; });
 let loadedLawsList = [], activeLawIdx = 0, parsedLawCards = [], rawLawsCache = [];
-
 function parseLawsToCards(data) {
     const cards = [];
     data.forEach((law, lawIdx) => {
@@ -498,17 +501,14 @@ function parseLawsToCards(data) {
         else if (/процессуал/i.test(rawTitle)) shortTag = "ПК";
         else if (/полиц/i.test(rawTitle)) shortTag = "ФЗ о Полиции";
         else if (/оружи/i.test(rawTitle)) shortTag = "ФЗ об Оружии";
-
         const lines = (law.content || "").split("\n");
         let cur = null;
         lines.forEach(line => {
             const t = line.trim();
             if (!t) return;
             const artMatch = t.match(/^(?:Статья|Ст\.?)\s*([0-9]+(?:\.[0-9]+)*)[.\s:—-]*(.*)/i);
-            if (artMatch) {
-                if (cur) cards.push(cur);
-                cur = { lawIdx: lawIdx + 1, tag: shortTag, fullLaw: rawTitle, num: artMatch[1], title: artMatch[2] || t, body: [] };
-            } else if (cur) { cur.body.push(t); }
+            if (artMatch) { if (cur) cards.push(cur); cur = { lawIdx: lawIdx + 1, tag: shortTag, fullLaw: rawTitle, num: artMatch[1], title: artMatch[2] || t, body: [] }; }
+            else if (cur) { cur.body.push(t); }
         });
         if (cur) cards.push(cur);
     });
@@ -533,9 +533,7 @@ window.openLawsModal = async function() {
         if (!data || data.length === 0) { box.innerText = "Файл laws.json пуст."; return; }
         loadedLawsList = [{ id: "all", title: "Все" }].concat(data);
         parsedLawCards = parseLawsToCards(data);
-        tabs.innerHTML = loadedLawsList.map((item, idx) =>
-            '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (idx===0?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>'
-        ).join("");
+        tabs.innerHTML = loadedLawsList.map((item, idx) => '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (idx===0?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
         selectLawTab(0);
     } catch (e) { box.innerText = "Ошибка загрузки laws.json: " + e; }
 };
@@ -572,7 +570,6 @@ window.filterLawsView = function() {
     }).join("");
 };
 let loadedNrpList = [], activeNrpIdx = 0, parsedNrpCards = [];
-
 function parseNrpToCards(data) {
     const cards = [];
     data.forEach((sec, secIdx) => {
@@ -583,17 +580,14 @@ function parseNrpToCards(data) {
         else if (/криминал|опг|крайм/i.test(rawTitle)) shortTag = "Правила Крайма";
         else if (/лидер/i.test(rawTitle)) shortTag = "Лидеры";
         else if (/игровых зон|зз/i.test(rawTitle)) shortTag = "Зелёные зоны";
-
         const lines = (sec.content || "").split("\n");
         let cur = null;
         lines.forEach(line => {
             const t = line.trim();
             if (!t) return;
             const ruleMatch = t.match(/^(?:Пункт|Правило|Раздел)?\s*([0-9]+(?:\.[0-9]+)+)[.\s:—-]*(.*)/i);
-            if (ruleMatch) {
-                if (cur) cards.push(cur);
-                cur = { secIdx: secIdx + 1, tag: shortTag, fullSec: rawTitle, num: ruleMatch[1], title: ruleMatch[2] || t, body: [] };
-            } else if (cur) { cur.body.push(t); }
+            if (ruleMatch) { if (cur) cards.push(cur); cur = { secIdx: secIdx + 1, tag: shortTag, fullSec: rawTitle, num: ruleMatch, title: ruleMatch || t, body: [] }; }
+            else if (cur) { cur.body.push(t); }
         });
         if (cur) cards.push(cur);
     });
@@ -611,9 +605,7 @@ window.openNrpModal = async function() {
         if (!Array.isArray(data) || data.length === 0) { box.innerText = "Файл nrp.json пуст."; return; }
         loadedNrpList = [{ id: "all", title: "Все" }].concat(data);
         parsedNrpCards = parseNrpToCards(data);
-        tabs.innerHTML = loadedNrpList.map((item, idx) =>
-            '<button onclick="selectNrpTab(' + idx + ')" id="nrp-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fca5a5':'#94a3b8') + '; border:1px solid ' + (idx===0?'#ef4444':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>'
-        ).join("");
+        tabs.innerHTML = loadedNrpList.map((item, idx) => '<button onclick="selectNrpTab(' + idx + ')" id="nrp-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fca5a5':'#94a3b8') + '; border:1px solid ' + (idx===0?'#ef4444':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>').join("");
         selectNrpTab(0);
     } catch (e) { box.innerText = "Ошибка загрузки nrp.json: " + e; }
 };
@@ -643,13 +635,12 @@ window.filterNrpView = function() {
             '<div style="font-size:15.5px; font-weight:800; color:#f8fafc; margin-bottom:8px; line-height:1.35;">' + c.title + '</div>' +
             (fullBody ? '<div style="font-size:12.5px; color:#94a3b8; line-height:1.45; margin-bottom:8px; white-space:pre-wrap;">' + fullBody + '</div>' : '') +
             '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
-                (punMatch ? '<span style="background:#261822; border:1px solid #572536; color:#fca5a5; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚠ ' + punMatch[0] + '</span>' : '') +
+                (punMatch ? '<span style="background:#261822; border:1px solid #572536; color:#fca5a5; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚠ ' + punMatch + '</span>' : '') +
                 '<span style="background:#1e2536; border:1px solid #2d374d; color:#94a3b8; font-size:11.5px; padding:4px 10px; border-radius:8px;">' + c.fullSec + '</span>' +
             '</div></div>';
     }).join("");
 };
 let loadedSchedList = [], activeServerName = "Все";
-
 window.openScheduleModal = async function() {
     document.getElementById("schedule-modal").style.display = "flex";
     if (loadedSchedList.length > 0) return;
@@ -660,9 +651,7 @@ window.openScheduleModal = async function() {
         if (!Array.isArray(data) || data.length === 0) { box.innerText = "График собеседований пуст."; return; }
         loadedSchedList = data;
         const servers = ["Все"].concat([...new Set(data.map(x => x.server_name))]);
-        tabs.innerHTML = servers.map(srv =>
-            '<button onclick="selectServerTab(\'' + srv + '\')" id="srv-tab-' + srv + '" style="background:' + (srv==='Все'?'#1e293b':'#11161d') + '; color:' + (srv==='Все'?'#6ee7b7':'#94a3b8') + '; border:1px solid ' + (srv==='Все'?'#10b981':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + srv + '</button>'
-        ).join("");
+        tabs.innerHTML = servers.map(srv => '<button onclick="selectServerTab(\'' + srv + '\')" id="srv-tab-' + srv + '" style="background:' + (srv==='Все'?'#1e293b':'#11161d') + '; color:' + (srv==='Все'?'#6ee7b7':'#94a3b8') + '; border:1px solid ' + (srv==='Все'?'#10b981':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + srv + '</button>').join("");
         selectServerTab("Все");
     } catch (e) { box.innerText = "Ошибка загрузки schedule.json: " + e; }
 };
@@ -695,7 +684,6 @@ window.filterScheduleView = function() {
 };
 
 let loadedItemsList = [], activeItemCat = "Все";
-
 window.openItemsModal = async function() {
     document.getElementById("items-modal").style.display = "flex";
     if (loadedItemsList.length > 0) return;
@@ -706,9 +694,7 @@ window.openItemsModal = async function() {
         if (!Array.isArray(data) || data.length === 0) { box.innerText = "Список пуст."; return; }
         loadedItemsList = data;
         const cats = ["Все"].concat([...new Set(data.map(x => x.category))]);
-        tabs.innerHTML = cats.map(c =>
-            '<button onclick="selectItemCat(\'' + c + '\')" id="item-tab-' + c + '" style="background:' + (c==='Все'?'#1e293b':'#11161d') + '; color:' + (c==='Все'?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (c==='Все'?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + c + '</button>'
-        ).join("");
+        tabs.innerHTML = cats.map(c => '<button onclick="selectItemCat(\'' + c + '\')" id="item-tab-' + c + '" style="background:' + (c==='Все'?'#1e293b':'#11161d') + '; color:' + (c==='Все'?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (c==='Все'?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + c + '</button>').join("");
         selectItemCat("Все");
     } catch (e) { box.innerText = "Ошибка загрузки items.json: " + e; }
 };
@@ -795,7 +781,7 @@ let activeProcTab = 0, procCheckedState = {};
 window.openProcModal = function() { document.getElementById("proc-modal").style.display = "flex"; selectProcTab(activeProcTab); };
 window.selectProcTab = function(idx) {
     activeProcTab = idx;
-    [0, 1, 2].forEach(i => {
+   [0, 1, 2].forEach(i => {
         const b = document.getElementById("proc-tab-" + i);
         if (b) { b.style.background = (i === idx) ? "#1e293b" : "#11161d"; b.style.color = (i === idx) ? "#7dd3fc" : "#94a3b8"; b.style.borderColor = (i === idx) ? "#0284c7" : "#1e293b"; }
     });
