@@ -1,4 +1,4 @@
-5<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -29,26 +29,10 @@ body { background: #0b0f14; color: #e2e8f0; font-family: sans-serif; height: 100
 .send-btn { background: #0ea5e9; color: #fff; font-weight: bold; font-size: 14px; }
 .setting-row { background: #0b0f14; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
 .setting-label { font-size: 11.5px; color: #64748b; margin-bottom: 6px; display: block; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes popIn { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes msgSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-#settings-modal[style*="flex"], #laws-modal[style*="flex"], #nrp-modal[style*="flex"], #schedule-modal[style*="flex"], #events-modal[style*="flex"], #items-modal[style*="flex"], #supplies-modal[style*="flex"], #notes-modal[style*="flex"] { animation: fadeIn 0.2s ease-out; }
-#settings-modal .card { animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-#lex-chat > div { animation: msgSlide 0.25s ease-out; }
-body, .header, .timer-bar, .presets-bar, .input-area, .card, .setting-row { transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
-button { transition: transform 0.12s ease, background 0.2s ease, opacity 0.2s ease; }
 button:active { transform: scale(0.94); }
 </style>
 </head>
 <body>
-<div id="tech-works-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:999999; display:flex; justify-content:center; align-items:center; padding:16px; text-align:center;">
-    <div class="card" style="border-color:#f59e0b;">
-        <div style="font-size:32px; margin-bottom:10px;">🛠</div>
-        <h2 style="color:#fbbf24; margin-bottom:8px;">Технические работы</h2>
-        <p style="color:#cbd5e1; font-size:13.5px; line-height:1.5; margin-bottom:12px;">Сейчас мы обновляем серверы и базу законов RMRP. Приложение скоро снова заработает в обычном режиме.</p>
-        <div style="background:#161b26; border:1px solid #232a3b; border-radius:8px; padding:8px; font-size:12px; color:#94a3b8;">Обновлять приложение вручную не нужно — оно запустится само после завершения работ.</div>
-    </div>
-</div>
 <div id="rmrp-lock-screen">
     <div class="card" style="text-align:center;">
         <h2>RMRPЮрист</h2>
@@ -123,7 +107,7 @@ button:active { transform: scale(0.94); }
         <div class="setting-row" style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:13px; font-weight:bold;">Защита от записи</div>
-                <div style="font-size:11px; color:#64748b;">Выкл. для откатов NVIDIA</div>
+                <div style="font-size:11px; color:#64748b;">Выкл. для стабильного FPS</div>
             </div>
             <button id="stealth-toggle-btn" onclick="toggleStealthMode()" style="background:#475569; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-weight:bold; font-size:12px; cursor:pointer;">ВЫКЛ</button>
         </div>
@@ -138,7 +122,7 @@ button:active { transform: scale(0.94); }
     </div>
     <input type="text" id="law-search-input" oninput="filterLawsView()" placeholder="Фильтр по списку (например: 37.1, 8.7, тонировка)..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#11161d; color:#fff; margin-bottom:8px; outline:none;">
     <div id="law-tabs" style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px; flex-shrink:0;"></div>
-    <div id="law-content-box" style="flex:1; overflow-y:auto; background:#0b0f14; border-radius:10px;">Загрузка законов из базы...</div>
+    <div id="law-content-box" style="flex:1; overflow-y:auto; background:#0b0f14; border-radius:10px;">Загрузка законов...</div>
 </div>
 <div id="nrp-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -206,6 +190,7 @@ button:active { transform: scale(0.94); }
     </div>
     <div id="notes-list-box" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
 </div>
+
 <div id="proc-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0f14; z-index:99999; flex-direction:column; padding:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-shrink:0;">
         <h2 style="font-size:18px; color:#7dd3fc;">Процессуальные действия</h2>
@@ -225,14 +210,14 @@ button:active { transform: scale(0.94); }
         <button class="role-btn" onclick="openLawsModal()" style="background:#0f2942; border-color:#0284c7;">Законка</button>
         <button class="role-btn" onclick="toggleHelperMenu(event)" style="background:#1e293b; color:#e2e8f0; border-color:#475569;">Помощник ▾</button>
 
-        <div id="helper-dropdown" style="display:none; position:absolute; top:34px; left:0; background:#11161d; border:1px solid #334155; border-radius:12px; padding:6px; min-width:175px; z-index:9999; box-shadow:0 12px 30px rgba(0,0,0,0.8); flex-direction:column; gap:5px;">
+        <div id="helper-dropdown" style="display:none; position:absolute; top:34px; left:0; background:#11161d; border:1px solid #334155; border-radius:12px; padding:6px; min-width:175px; z-index:9999; flex-direction:column; gap:5px;">
+            <button onclick="openProcModal(); closeHelperMenu();" style="background:#0c4a6e; color:#7dd3fc; border:1px solid #0284c7; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">📋 Процессуалка</button>
             <button onclick="openNrpModal(); closeHelperMenu();" style="background:#2d1518; color:#fca5a5; border:1px solid #7f1d1d; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🚫 Правила НРП</button>
             <button onclick="openScheduleModal(); closeHelperMenu();" style="background:#064e3b; color:#6ee7b7; border:1px solid #059669; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🕒 График наборов</button>
             <button onclick="document.getElementById('events-modal').style.display='flex'; closeHelperMenu();" style="background:#3b1d5e; color:#d8b4fe; border:1px solid #7e22ce; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🎉 События</button>
             <button onclick="openItemsModal(); closeHelperMenu();" style="background:#1e293b; color:#fbbf24; border:1px solid #b45309; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">🔫 Оружие и маски</button>
             <button onclick="document.getElementById('supplies-modal').style.display='flex'; closeHelperMenu();" style="background:#172554; color:#93c5fd; border:1px solid #1d4ed8; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">📦 Позиции на поставках</button>
-            <button onclick="openProcModal(); closeHelperMenu();" style="background:#0c4a6e; color:#7dd3fc; border:1px solid #0284c7; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:bold; text-align:left; cursor:pointer;">📋 Процессуалка</button>
-</div>
+        </div>
     </div>
     <div style="display:flex; gap:4px; align-items:center;">
         <button id="lex-role-btn" class="role-btn" onclick="cycleLexRole()">ОФИЦЕР</button>
@@ -274,9 +259,9 @@ button:active { transform: scale(0.94); }
     </div>
 </div>
 <script>
-const SB_BASE = "https://rmrp-proxy-mkochnev13.mia0.amvera.tech";
-const SB_KEY = "sb_publishable_zxEzT7COe0uFc-WNIY0Qxg_Fmi5x-tO";
-const sbHeaders = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json", "Prefer": "return=representation" };
+const PROXY_API_URL = "https://proxyapi.ru";
+const PROXY_API_KEY = "sk-80sbXzhD8Sy3nWOdJqm5P6DL39JeinwC";
+const AI_MODEL = "gpt-4o-mini";
 
 let currentDevId = null, timerInterval = null, timerSecondsLeft = 0;
 let currentUsedReq = 0, currentLimitReq = 50, currentLastReset = null, resetCountdownInterval = null;
@@ -315,7 +300,7 @@ function startResetCountdown() {
     const tickReset = () => {
         if (!currentLastReset) { timerEl.innerText = "Обновляется каждые 24 часа"; return; }
         const diff = new Date(currentLastReset).getTime() + 86400000 - Date.now();
-        if (diff <= 0) { timerEl.innerText = "Доступно обновление (сделайте любой запрос)"; timerEl.style.color = "#34d399"; return; }
+        if (diff <= 0) { timerEl.innerText = "Лимит обновлён"; timerEl.style.color = "#34d399"; return; }
         const h = String(Math.floor(diff / 3600000)).padStart(2, "0"), m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0"), s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
         timerEl.style.color = "#64748b"; timerEl.innerText = "Обновление через: " + h + "ч " + m + "м " + s + "с";
     };
@@ -351,34 +336,61 @@ async function getDeviceId() {
     return id;
 }
 
+function getLocalUsage(limit) {
+    const today = new Date().toISOString().slice(0, 10);
+    const savedDay = localStorage.getItem("rmrp_usage_day");
+    let used = parseInt(localStorage.getItem("rmrp_usage_cnt") || "0");
+    if (savedDay !== today) {
+        used = 0;
+        localStorage.setItem("rmrp_usage_day", today);
+        localStorage.setItem("rmrp_usage_cnt", "0");
+    }
+    const nextMidnight = new Date(); nextMidnight.setHours(24, 0, 0, 0);
+    const lastReset = new Date(nextMidnight.getTime() - 86400000).toISOString();
+    return { used, limit: limit || 50, lastReset };
+}
+
 async function checkAccess() {
     currentDevId = await getDeviceId();
     const savedKey = localStorage.getItem("rmrp_saved_key");
+    const cachedExp = localStorage.getItem("rmrp_cached_exp");
     const lockScreen = document.getElementById("rmrp-lock-screen"), lockMsg = document.getElementById("lock-msg"), lockForm = document.getElementById("lock-form");
-    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+
+    if (savedKey && cachedExp && new Date(cachedExp) >= new Date()) {
+        const u = getLocalUsage(parseInt(localStorage.getItem("rmrp_cached_limit") || "50"));
+        updateSubDisplay(cachedExp, u.used, u.limit, u.lastReset);
+        lockScreen.style.display = "none";
+        applySavedSettings();
+    }
+
     try {
-        const query = savedKey ? "key_code=eq." + encodeURIComponent(savedKey) : "device_id=eq." + encodeURIComponent(currentDevId);
-        const res = await fetch(SB_BASE + "/rest/v1/license_keys?" + query + "&select=*", { headers: sbHeaders, signal: controller.signal });
-        clearTimeout(timer);
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-            const key = data.at(0);
-            if (!key.is_banned && new Date(key.expires_at) >= new Date()) {
-                if (key.device_id !== currentDevId && currentDevId.startsWith("win_")) {
-                    await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(key.key_code), { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ device_id: currentDevId }) });
+        const res = await fetch("./keys.json?v=" + Date.now());
+        const keys = await res.json();
+        if (Array.isArray(keys)) {
+            const key = keys.find(k => (savedKey && k.key_code === savedKey) || (!savedKey && k.device_id === currentDevId));
+            if (key) {
+                const expDate = key.expires_at || cachedExp || new Date(Date.now() + (key.days || 30) * 86400000).toISOString();
+                if (!key.is_banned && new Date(expDate) >= new Date()) {
+                    localStorage.setItem("rmrp_saved_key", key.key_code);
+                    localStorage.setItem("rmrp_cached_exp", expDate);
+                    localStorage.setItem("rmrp_cached_limit", String(key.requests_limit || 50));
+                    const u = getLocalUsage(key.requests_limit || 50);
+                    updateSubDisplay(expDate, u.used, u.limit, u.lastReset);
+                    lockScreen.style.display = "none";
+                    applySavedSettings();
+                    return;
                 }
-                localStorage.setItem("rmrp_saved_key", key.key_code);
-                updateSubDisplay(key.expires_at, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
-                lockScreen.style.display = "none"; applySavedSettings(); return;
+                localStorage.removeItem("rmrp_saved_key"); localStorage.removeItem("rmrp_cached_exp");
+                lockScreen.style.display = "flex";
+                lockMsg.innerText = key.is_banned ? "Ваш ключ заблокирован." : "Срок подписки истек. Введите новый ключ:";
+                lockForm.style.display = "block";
+                return;
             }
-            localStorage.removeItem("rmrp_saved_key");
-            lockMsg.innerText = key.is_banned ? "Ваш ключ заблокирован." : "Срок подписки истек. Введите новый ключ:";
-        } else {
-            localStorage.removeItem("rmrp_saved_key");
-            lockMsg.innerText = "Введите лицензионный ключ:";
         }
-    } catch (e) { clearTimeout(timer); lockMsg.innerText = "Введите ключ или проверьте сеть:"; }
-    lockForm.style.display = "block";
+        if (!savedKey) { lockMsg.innerText = "Введите лицензионный ключ:"; lockForm.style.display = "block"; }
+    } catch (e) {
+        if (lockScreen.style.display !== "none") { lockMsg.innerText = "Введите лицензионный ключ:"; lockForm.style.display = "block"; }
+    }
 }
 
 window.activateKey = async function() {
@@ -387,24 +399,24 @@ window.activateKey = async function() {
     if (!currentDevId) currentDevId = await getDeviceId();
     const lockMsg = document.getElementById("lock-msg");
     lockMsg.innerText = "Проверка ключа...";
-    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 15000);
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(code) + "&select=*", { headers: sbHeaders, signal: ctrl.signal });
-        clearTimeout(t);
-        const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { lockMsg.innerText = "Неверный ключ!"; return; }
-        const key = data.at(0);
+        const res = await fetch("./keys.json?v=" + Date.now());
+        const keys = await res.json();
+        const key = Array.isArray(keys) ? keys.find(k => (k.key_code || "").toUpperCase() === code) : null;
+        if (!key) { lockMsg.innerText = "Неверный ключ!"; return; }
         if (key.is_banned) { lockMsg.innerText = "Ключ заблокирован."; return; }
         if (key.device_id && key.device_id !== currentDevId) { lockMsg.innerText = "Ключ привязан к другому устройству!"; return; }
         let expDate = key.expires_at;
         if (!expDate) { const d = new Date(); d.setDate(d.getDate() + (key.days || 30)); expDate = d.toISOString(); }
         else if (new Date(expDate) < new Date()) { lockMsg.innerText = "Срок ключа истек."; return; }
-        const patchRes = await fetch(SB_BASE + "/rest/v1/license_keys?key_code=eq." + encodeURIComponent(code), { method: "PATCH", headers: sbHeaders, body: JSON.stringify({ device_id: currentDevId, expires_at: expDate }) });
-        if (!patchRes.ok) { lockMsg.innerText = "Ошибка записи (" + patchRes.status + ")."; return; }
         localStorage.setItem("rmrp_saved_key", code);
-        updateSubDisplay(expDate, key.requests_used || 0, key.requests_limit || 50, key.last_reset);
-        document.getElementById("rmrp-lock-screen").style.display = "none"; applySavedSettings();
-    } catch (e) { clearTimeout(t); lockMsg.innerText = "Тайм-аут или ошибка сети. Попробуйте ещё раз."; }
+        localStorage.setItem("rmrp_cached_exp", expDate);
+        localStorage.setItem("rmrp_cached_limit", String(key.requests_limit || 50));
+        const u = getLocalUsage(key.requests_limit || 50);
+        updateSubDisplay(expDate, u.used, u.limit, u.lastReset);
+        document.getElementById("rmrp-lock-screen").style.display = "none";
+        applySavedSettings();
+    } catch (e) { lockMsg.innerText = "Ошибка загрузки базы ключей."; }
 };
 window.setAppColor = function(mainHex, lightHex) {
     localStorage.setItem("rmrp_color_main", mainHex); localStorage.setItem("rmrp_color_light", lightHex);
@@ -418,9 +430,9 @@ window.setBgTheme = function(mode) {
     let tag = document.getElementById("dyn-bg");
     if (!tag) { tag = document.createElement("style"); tag.id = "dyn-bg"; document.head.appendChild(tag); }
     if (mode === "oled") {
-        tag.innerHTML = "body, .setting-row, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #supplies-modal, #notes-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #000000 !important; color: #f4f4f5 !important; } .header, .timer-bar, .presets-bar, .input-area, .card { background: #09090b !important; border-color: #27272a !important; }";
+        tag.innerHTML = "body, .setting-row, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #supplies-modal, #notes-modal, #proc-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #000000 !important; color: #f4f4f5 !important; } .header, .timer-bar, .presets-bar, .input-area, .card { background: #09090b !important; border-color: #27272a !important; }";
     } else if (mode === "light") {
-        tag.innerHTML = "body, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #supplies-modal, #notes-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #f1f5f9 !important; color: #0f172a !important; } .header, .presets-bar, .input-area, .card { background: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; } .timer-bar, .setting-row { background: #e2e8f0 !important; border-color: #cbd5e1 !important; } #lex-input, .card h2 { color: #0f172a !important; } .preset-chip, .circle-btn, .timer-btn { background: #e2e8f0 !important; color: #334155 !important; border-color: #cbd5e1 !important; }";
+        tag.innerHTML = "body, #laws-modal, #nrp-modal, #schedule-modal, #events-modal, #items-modal, #supplies-modal, #notes-modal, #proc-modal, #law-content-box, #nrp-content-box, #sched-content-box, #items-content-box { background: #f1f5f9 !important; color: #0f172a !important; } .header, .presets-bar, .input-area, .card { background: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; } .timer-bar, .setting-row { background: #e2e8f0 !important; border-color: #cbd5e1 !important; } #lex-input, .card h2 { color: #0f172a !important; } .preset-chip, .circle-btn, .timer-btn { background: #e2e8f0 !important; color: #334155 !important; border-color: #cbd5e1 !important; }";
     } else { tag.innerHTML = ""; }
 };
 
@@ -473,7 +485,7 @@ window.toggleStealthMode = async function() {
 window.toggleHelperMenu = function(e) { if (e) e.stopPropagation(); const m = document.getElementById("helper-dropdown"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; };
 window.closeHelperMenu = function() { const m = document.getElementById("helper-dropdown"); if (m) m.style.display = "none"; };
 document.addEventListener("click", function(e) { const m = document.getElementById("helper-dropdown"); if (m && m.style.display === "flex" && !m.contains(e.target)) m.style.display = "none"; });
-let loadedLawsList = [], activeLawIdx = 0, parsedLawCards = [];
+let loadedLawsList = [], activeLawIdx = 0, parsedLawCards = [], rawLawsCache = [];
 
 function parseLawsToCards(data) {
     const cards = [];
@@ -495,7 +507,7 @@ function parseLawsToCards(data) {
             const artMatch = t.match(/^(?:Статья|Ст\.?)\s*([0-9]+(?:\.[0-9]+)*)[.\s:—-]*(.*)/i);
             if (artMatch) {
                 if (cur) cards.push(cur);
-                cur = { lawIdx: lawIdx + 1, tag: shortTag, fullLaw: rawTitle, num: artMatch, title: artMatch || t, body: [] };
+                cur = { lawIdx: lawIdx + 1, tag: shortTag, fullLaw: rawTitle, num: artMatch[1], title: artMatch[2] || t, body: [] };
             } else if (cur) { cur.body.push(t); }
         });
         if (cur) cards.push(cur);
@@ -503,22 +515,29 @@ function parseLawsToCards(data) {
     return cards;
 }
 
+async function ensureLawsLoaded() {
+    if (rawLawsCache.length > 0) return rawLawsCache;
+    const res = await fetch("./laws.json?v=" + Date.now());
+    const data = await res.json();
+    if (Array.isArray(data)) rawLawsCache = data;
+    return rawLawsCache;
+}
+
 window.openLawsModal = async function() {
     document.getElementById("laws-modal").style.display = "flex";
     if (loadedLawsList.length > 0) return;
     const box = document.getElementById("law-content-box"), tabs = document.getElementById("law-tabs");
-    box.innerText = "Загрузка базы законов...";
+    box.innerText = "Загрузка законов...";
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/rmrp_laws?select=id,title,content&order=id.asc", { headers: sbHeaders });
-        const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { box.innerText = "База законов пуста."; return; }
+        const data = await ensureLawsLoaded();
+        if (!data || data.length === 0) { box.innerText = "Файл laws.json пуст."; return; }
         loadedLawsList = [{ id: "all", title: "Все" }].concat(data);
         parsedLawCards = parseLawsToCards(data);
         tabs.innerHTML = loadedLawsList.map((item, idx) =>
             '<button onclick="selectLawTab(' + idx + ')" id="law-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (idx===0?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>'
         ).join("");
         selectLawTab(0);
-    } catch (e) { box.innerText = "Ошибка загрузки: " + e; }
+    } catch (e) { box.innerText = "Ошибка загрузки laws.json: " + e; }
 };
 
 window.selectLawTab = function(idx) {
@@ -547,7 +566,7 @@ window.filterLawsView = function() {
             '<div style="font-size:15.5px; font-weight:800; color:#f8fafc; margin-bottom:8px; line-height:1.35;">' + c.title + '</div>' +
             (fullBody ? '<div style="font-size:12.5px; color:#94a3b8; line-height:1.45; margin-bottom:8px; white-space:pre-wrap;">' + fullBody + '</div>' : '') +
             '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
-                (punMatch ? '<span style="background:#1e2536; border:1px solid #2d374d; color:#cbd5e1; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚖ ' + punMatch + '</span>' : '') +
+                (punMatch ? '<span style="background:#1e2536; border:1px solid #2d374d; color:#cbd5e1; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚖ ' + punMatch[0] + '</span>' : '') +
                 '<span style="background:#1e2536; border:1px solid #2d374d; color:#94a3b8; font-size:11.5px; padding:4px 10px; border-radius:8px;">' + c.fullLaw + '</span>' +
             '</div></div>';
     }).join("");
@@ -573,7 +592,7 @@ function parseNrpToCards(data) {
             const ruleMatch = t.match(/^(?:Пункт|Правило|Раздел)?\s*([0-9]+(?:\.[0-9]+)+)[.\s:—-]*(.*)/i);
             if (ruleMatch) {
                 if (cur) cards.push(cur);
-                cur = { secIdx: secIdx + 1, tag: shortTag, fullSec: rawTitle, num: ruleMatch, title: ruleMatch || t, body: [] };
+                cur = { secIdx: secIdx + 1, tag: shortTag, fullSec: rawTitle, num: ruleMatch[1], title: ruleMatch[2] || t, body: [] };
             } else if (cur) { cur.body.push(t); }
         });
         if (cur) cards.push(cur);
@@ -585,18 +604,18 @@ window.openNrpModal = async function() {
     document.getElementById("nrp-modal").style.display = "flex";
     if (loadedNrpList.length > 0) return;
     const box = document.getElementById("nrp-content-box"), tabs = document.getElementById("nrp-tabs");
-    box.innerText = "Загрузка правил сервера...";
+    box.innerText = "Загрузка правил...";
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/rmrp_nrp?select=id,title,content&order=id.asc", { headers: sbHeaders });
+        const res = await fetch("./nrp.json?v=" + Date.now());
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { box.innerText = "База правил НРП пуста."; return; }
+        if (!Array.isArray(data) || data.length === 0) { box.innerText = "Файл nrp.json пуст."; return; }
         loadedNrpList = [{ id: "all", title: "Все" }].concat(data);
         parsedNrpCards = parseNrpToCards(data);
         tabs.innerHTML = loadedNrpList.map((item, idx) =>
             '<button onclick="selectNrpTab(' + idx + ')" id="nrp-tab-' + idx + '" style="background:' + (idx===0?'#1e293b':'#11161d') + '; color:' + (idx===0?'#fca5a5':'#94a3b8') + '; border:1px solid ' + (idx===0?'#ef4444':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + (item.title || item.id) + '</button>'
         ).join("");
         selectNrpTab(0);
-    } catch (e) { box.innerText = "Ошибка загрузки правил: " + e; }
+    } catch (e) { box.innerText = "Ошибка загрузки nrp.json: " + e; }
 };
 
 window.selectNrpTab = function(idx) {
@@ -624,7 +643,7 @@ window.filterNrpView = function() {
             '<div style="font-size:15.5px; font-weight:800; color:#f8fafc; margin-bottom:8px; line-height:1.35;">' + c.title + '</div>' +
             (fullBody ? '<div style="font-size:12.5px; color:#94a3b8; line-height:1.45; margin-bottom:8px; white-space:pre-wrap;">' + fullBody + '</div>' : '') +
             '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
-                (punMatch ? '<span style="background:#261822; border:1px solid #572536; color:#fca5a5; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚠ ' + punMatch + '</span>' : '') +
+                (punMatch ? '<span style="background:#261822; border:1px solid #572536; color:#fca5a5; font-size:11.5px; padding:4px 10px; border-radius:8px;">⚠ ' + punMatch[0] + '</span>' : '') +
                 '<span style="background:#1e2536; border:1px solid #2d374d; color:#94a3b8; font-size:11.5px; padding:4px 10px; border-radius:8px;">' + c.fullSec + '</span>' +
             '</div></div>';
     }).join("");
@@ -636,16 +655,16 @@ window.openScheduleModal = async function() {
     if (loadedSchedList.length > 0) return;
     const box = document.getElementById("sched-content-box"), tabs = document.getElementById("sched-tabs");
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/rmrp_schedule?select=*&order=id.asc", { headers: sbHeaders });
+        const res = await fetch("./schedule.json?v=" + Date.now());
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { box.innerText = "График собеседований пока пуст."; return; }
+        if (!Array.isArray(data) || data.length === 0) { box.innerText = "График собеседований пуст."; return; }
         loadedSchedList = data;
         const servers = ["Все"].concat([...new Set(data.map(x => x.server_name))]);
         tabs.innerHTML = servers.map(srv =>
             '<button onclick="selectServerTab(\'' + srv + '\')" id="srv-tab-' + srv + '" style="background:' + (srv==='Все'?'#1e293b':'#11161d') + '; color:' + (srv==='Все'?'#6ee7b7':'#94a3b8') + '; border:1px solid ' + (srv==='Все'?'#10b981':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + srv + '</button>'
         ).join("");
         selectServerTab("Все");
-    } catch (e) { box.innerText = "Ошибка загрузки графика: " + e; }
+    } catch (e) { box.innerText = "Ошибка загрузки schedule.json: " + e; }
 };
 
 window.selectServerTab = function(srv) {
@@ -682,16 +701,16 @@ window.openItemsModal = async function() {
     if (loadedItemsList.length > 0) return;
     const box = document.getElementById("items-content-box"), tabs = document.getElementById("items-tabs");
     try {
-        const res = await fetch(SB_BASE + "/rest/v1/rmrp_items?select=*&order=id.asc", { headers: sbHeaders });
+        const res = await fetch("./items.json?v=" + Date.now());
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) { box.innerText = "Список пока пуст."; return; }
+        if (!Array.isArray(data) || data.length === 0) { box.innerText = "Список пуст."; return; }
         loadedItemsList = data;
         const cats = ["Все"].concat([...new Set(data.map(x => x.category))]);
         tabs.innerHTML = cats.map(c =>
             '<button onclick="selectItemCat(\'' + c + '\')" id="item-tab-' + c + '" style="background:' + (c==='Все'?'#1e293b':'#11161d') + '; color:' + (c==='Все'?'#fbbf24':'#94a3b8') + '; border:1px solid ' + (c==='Все'?'#f59e0b':'#1e293b') + '; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">' + c + '</button>'
         ).join("");
         selectItemCat("Все");
-    } catch (e) { box.innerText = "Ошибка загрузки: " + e; }
+    } catch (e) { box.innerText = "Ошибка загрузки items.json: " + e; }
 };
 
 window.selectItemCat = function(cat) {
@@ -748,34 +767,28 @@ function renderPersonalNotes() {
 }
 
 const procGuides = [
-    {
-        steps: [
-            { title: "1. Надеть наручники / пресечь нарушение", desc: "Обеспечить безопасность, применить спецсредства согласно стадиям применения силы." },
-            { title: "2. Представиться и предъявить жетон / удостоверение", desc: "Назвать звание, ведомство, ФИО или номер жетона/нашивки." },
-            { title: "3. Разъяснить причину и статью задержания", desc: "Чётко озвучить, по какой именно статье УК / КоАП задержан гражданин." },
-            { title: "4. Провести первичный обыск", desc: "Изъять холодное и огнестрельное оружие, средства связи при необходимости, проверить документы." },
-            { title: "5. Зачитать правило Миранды", desc: "Озвучить право хранить молчание, право на адвоката и один телефонный звонок (до 2-3 мин)." },
-            { title: "6. Доставить в КПЗ и реализовать права", desc: "Вызвать адвоката в рацию департамента (запустить таймер 5/10 мин), дать звонок по требованию." },
-            { title: "7. Вторичный обыск, розыск и арест", desc: "После приезда адвоката или истечения времени — изъять нелегал, выдать розыск по статьям и посадить в КПЗ." }
-        ]
-    },
-    {
-        steps: [
-            { title: "1. Требование об остановке в мегафон", desc: "Чётко указать марку/цвет авто и номер, потребовать прижаться к обочине и заглушить двигатель." },
-            { title: "2. Парковка патрульного авто", desc: "Встать позади автомобиля нарушителя со смещением левее для контроля двери водителя." },
-            { title: "3. Представиться и назвать причину остановки", desc: "Подойти к водительскому окну, показать удостоверение и назвать конкретную статью ПДД/КоАП." },
-            { title: "4. Проверка документов", desc: "Запросить паспорт, водительское удостоверение и техпаспорт (СТС) на транспортное средство." },
-            { title: "5. Вынесение решения", desc: "Выписать административный штраф по КоАП или сделать устное предупреждение при малозначительности." }
-        ]
-    },
-    {
-        steps: [
-            { title: "1. Проверка законности задержания", desc: "Сотрудник обязан представиться, показать жетон/удостоверение и назвать конкретную статью." },
-            { title: "2. Правило Миранды", desc: "Если Миранда не зачитана до проведения допроса/посадки в КПЗ — это основание для освобождения / жалобы." },
-            { title: "3. Право на адвоката и звонок", desc: "Требуйте вызова государственного/частного адвоката и телефонный звонок до оформления ареста." },
-            { title: "4. Фиксация нарушений", desc: "Запомните жетон/ID сотрудника, время задержания и запросите видеофиксацию нарушения через адвоката или суд." }
-        ]
-    }
+    { steps: [
+        { title: "1. Надеть наручники / пресечь нарушение", desc: "Обеспечить безопасность, применить спецсредства согласно стадиям применения силы." },
+        { title: "2. Представиться и предъявить жетон / удостоверение", desc: "Назвать звание, ведомство, ФИО или номер жетона/нашивки." },
+        { title: "3. Разъяснить причину и статью задержания", desc: "Чётко озвучить, по какой именно статье УК / КоАП задержан гражданин." },
+        { title: "4. Провести первичный обыск", desc: "Изъять холодное и огнестрельное оружие, средства связи при необходимости, проверить документы." },
+        { title: "5. Зачитать правило Миранды", desc: "Озвучить право хранить молчание, право на адвоката и один телефонный звонок (до 2-3 мин)." },
+        { title: "6. Доставить в КПЗ и реализовать права", desc: "Вызвать адвоката в рацию департамента (запустить таймер 5/10 мин), дать звонок по требованию." },
+        { title: "7. Вторичный обыск, розыск и арест", desc: "После приезда адвоката или истечения времени — изъять нелегал, выдать розыск по статьям и посадить в КПЗ." }
+    ]},
+    { steps: [
+        { title: "1. Требование об остановке в мегафон", desc: "Чётко указать марку/цвет авто и номер, потребовать прижаться к обочине и заглушить двигатель." },
+        { title: "2. Парковка патрульного авто", desc: "Встать позади автомобиля нарушителя со смещением левее для контроля двери водителя." },
+        { title: "3. Представиться и назвать причину остановки", desc: "Подойти к водительскому окну, показать удостоверение и назвать конкретную статью ПДД/КоАП." },
+        { title: "4. Проверка документов", desc: "Запросить паспорт, водительское удостоверение и техпаспорт (СТС) на транспортное средство." },
+        { title: "5. Вынесение решения", desc: "Выписать административный штраф по КоАП или сделать устное предупреждение при малозначительности." }
+    ]},
+    { steps: [
+        { title: "1. Проверка законности задержания", desc: "Сотрудник обязан представиться, показать жетон/удостоверение и назвать конкретную статью." },
+        { title: "2. Правило Миранды", desc: "Если Миранда не зачитана до проведения допроса/посадки в КПЗ — это основание для освобождения / жалобы." },
+        { title: "3. Право на адвоката и звонок", desc: "Требуйте вызова государственного/частного адвоката и телефонный звонок до оформления ареста." },
+        { title: "4. Фиксация нарушений", desc: "Запомните жетон/ID сотрудника, время задержания и запросите видеофиксацию нарушения через адвоката или суд." }
+    ]}
 ];
 
 let activeProcTab = 0, procCheckedState = {};
@@ -799,12 +812,12 @@ function renderProcSteps() {
             '<div><div style="font-size:14px; font-weight:bold; color:' + (done ? '#6ee7b7' : '#f8fafc') + '; margin-bottom:4px; text-decoration:' + (done ? 'line-through' : 'none') + ';">' + st.title + '</div><div style="font-size:12px; color:#94a3b8; line-height:1.4;">' + st.desc + '</div></div></div>';
     }).join("");
 }
-
 const lexRoles = ["ОФИЦЕР", "АДВОКАТ", "ГРАЖДАНИН"];
 let lexRoleIdx = 0;
 window.cycleLexRole = function() { lexRoleIdx = (lexRoleIdx + 1) % lexRoles.length; document.getElementById("lex-role-btn").innerText = lexRoles[lexRoleIdx]; };
 window.clearLexChat = function() { document.getElementById("lex-chat").innerHTML = '<div class="empty-hint">История очищена. Выберите ситуацию снизу или напишите запрос.</div>'; };
 window.sendPreset = function(promptText) { document.getElementById("lex-input").value = promptText; window.sendLexMessage(); };
+
 function appendLexBubble(isUser, text, roleLabel) {
     const chat = document.getElementById("lex-chat"), hint = chat.querySelector(".empty-hint");
     if (hint) hint.remove();
@@ -821,13 +834,29 @@ function appendLexBubble(isUser, text, roleLabel) {
 window.sendLexMessage = async function() {
     const input = document.getElementById("lex-input"), text = input.value.trim();
     if (!text) return;
+    const u = getLocalUsage(currentLimitReq);
+    if (u.used >= u.limit) { appendLexBubble(false, "Дневной лимит ИИ-запросов исчерпан.", "СИСТЕМА"); return; }
     const currentRole = lexRoles[lexRoleIdx]; input.value = ""; appendLexBubble(true, text);
     const loading = appendLexBubble(false, "Анализирую законы RMRP...", currentRole);
     try {
-        const res = await fetch(SB_BASE + "/functions/v1/ai-lawyer", { method: "POST", headers: { "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }, body: JSON.stringify({ situation: text, role: currentRole, deviceId: currentDevId }) });
-        const data = await res.json(); loading.remove(); appendLexBubble(false, data.reply || "Нет ответа.", currentRole);
-        if (data.reply && !data.reply.includes("лимит ИИ-запросов исчерпан")) updateSubDisplay(null, currentUsedReq + 1, currentLimitReq, null);
-    } catch (e) { loading.remove(); appendLexBubble(false, "Ошибка соединения.", currentRole); }
+        const laws = await ensureLawsLoaded();
+        const lawsContext = laws.map(l => (l.title || "") + ":\n" + (l.content || "").slice(0, 3500)).join("\n\n");
+        const sysPrompt = "Ты строгий и точный юридический помощник по законам сервера RMRP (GTA 5 RP Москва). Роль пользователя: " + currentRole + ". Опирайся на законы RMRP:\n" + lawsContext + "\nОтвечай строго по структуре:\n• Суть: (краткий ответ)\n• Закон: (точные статьи УК, КоАП, ПДД или ПК RMRP)\n• Детали: (порядок действий и нюансы)\n• Фраза в войс: (готовая короткая фраза для озвучки в голосовой чат)";
+        const res = await fetch(PROXY_API_URL + "/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + PROXY_API_KEY },
+            body: JSON.stringify({ model: AI_MODEL, messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], temperature: 0.3 })
+        });
+        const data = await res.json();
+        loading.remove();
+        const reply = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : (data.error ? "Ошибка API: " + data.error.message : "Нет ответа.");
+        appendLexBubble(false, reply, currentRole);
+        if (data.choices) {
+            const newUsed = u.used + 1;
+            localStorage.setItem("rmrp_usage_cnt", String(newUsed));
+            updateSubDisplay(null, newUsed, u.limit, u.lastReset);
+        }
+    } catch (e) { loading.remove(); appendLexBubble(false, "Ошибка соединения с ProxyAPI.", currentRole); }
 };
 
 let lexRec = null, lexChunks = [], lexIsRec = false;
@@ -840,9 +869,11 @@ window.toggleLexVoice = async function() {
         lexRec.ondataavailable = e => { if (e.data.size > 0) lexChunks.push(e.data); };
         lexRec.onstop = async () => {
             lexIsRec = false; btn.style.background = "#1e293b"; btn.innerText = "..."; stream.getTracks().forEach(t => t.stop());
-            const form = new FormData(); form.append("file", new Blob(lexChunks, { type: "audio/webm" }), "voice.webm");
+            const form = new FormData();
+            form.append("file", new Blob(lexChunks, { type: "audio/webm" }), "voice.webm");
+            form.append("model", "whisper-1");
             try {
-                const res = await fetch(SB_BASE + "/functions/v1/voice-to-text", { method: "POST", headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }, body: form });
+                const res = await fetch(PROXY_API_URL + "/audio/transcriptions", { method: "POST", headers: { "Authorization": "Bearer " + PROXY_API_KEY }, body: form });
                 const data = await res.json();
                 if (data.text) { document.getElementById("lex-input").value = data.text; window.sendLexMessage(); }
             } catch (_) {}
